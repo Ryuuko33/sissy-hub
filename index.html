@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sissy Hub">
+    <meta name="theme-color" content="#d946ef">
+    <title>♠ Mistress Stella's Sissy Hub</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230d0510'/><text x='90' y='115' font-size='90' text-anchor='middle' fill='%23d946ef'>♠</text></svg>">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="app">
+
+        <!-- ============================================================ -->
+        <!--  TAB: FITNESS (Vacuum Belly Timer)                           -->
+        <!-- ============================================================ -->
+        <div id="tab-fitness" class="tab-content active">
+
+            <!-- Header -->
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Sissy Fitness</h1>
+                <p class="header__subtitle">♠ 乖乖练，做主人最漂亮的小骚货 ♠</p>
+            </header>
+
+            <!-- Screen: Fitness Hub (选择训练项目) -->
+            <section id="fit-hub" class="screen active">
+                <div class="mode-list">
+                    <button class="mode-btn" id="btn-goto-daily">
+                        <div class="mode-btn__icon mode-btn__icon--svg">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c-4.97 0-9-2.69-9-6v-2c0-3.31 4.03-6 9-6s9 2.69 9 6v2c0 3.31-4.03 6-9 6z"/><path d="M12 2C9.24 2 7 4.24 7 7c0 1.66.81 3.13 2.05 4.04"/><path d="M12 2c2.76 0 5 2.24 5 5 0 1.66-.81 3.13-2.05 4.04"/></svg>
+                        </div>
+                        <div class="mode-btn__text">
+                            <div class="mode-btn__name">每日束腰与核心</div>
+                            <div class="mode-btn__detail">每周7天 · 每天10-15分钟 · 把小肚子夹紧夹平~</div>
+                        </div>
+                        <div class="mode-btn__arrow">&rsaquo;</div>
+                    </button>
+                    <button class="mode-btn" id="btn-goto-day1">
+                        <div class="mode-btn__icon mode-btn__icon--svg">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 8v4"/><path d="M9 12l-3 8h12l-3-8"/><path d="M7 16h10"/></svg>
+                        </div>
+                        <div class="mode-btn__text">
+                            <div class="mode-btn__name">蜜桃臀与腿部</div>
+                            <div class="mode-btn__detail">专项塑形 Day 1 · 练出让主人满意的蜜桃臀~</div>
+                        </div>
+                        <div class="mode-btn__arrow">&rsaquo;</div>
+                    </button>
+                    <button class="mode-btn" id="btn-goto-day2">
+                        <div class="mode-btn__icon mode-btn__icon--svg">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                        </div>
+                        <div class="mode-btn__text">
+                            <div class="mode-btn__name">腰腹强化与体态</div>
+                            <div class="mode-btn__detail">专项塑形 Day 2 · 雕刻骚货的沙漏腰~</div>
+                        </div>
+                        <div class="mode-btn__arrow">&rsaquo;</div>
+                    </button>
+                    <button class="mode-btn" id="btn-goto-day3">
+                        <div class="mode-btn__icon mode-btn__icon--svg">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5a3.5 3.5 0 1 0 0-7M17.5 6.5a3.5 3.5 0 1 1 0-7"/><path d="M6.5 3h11"/><path d="M3 6.5h3.5"/><path d="M17.5 6.5H21"/><line x1="12" y1="6.5" x2="12" y2="22"/></svg>
+                        </div>
+                        <div class="mode-btn__text">
+                            <div class="mode-btn__name">胸部与手臂</div>
+                            <div class="mode-btn__detail">专项塑形 Day 3 · 挺起来，让主人看看~</div>
+                        </div>
+                        <div class="mode-btn__arrow">&rsaquo;</div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Screen: 每日束腰与核心计划 -->
+            <section id="fit-daily" class="screen">
+                <div class="screen-back">
+<button class="btn-back" id="btn-daily-back">&larr; 回去</button>
+                    <span class="screen-back__title">每日束腰与核心</span>
+                </div>
+                <div class="plan-notice">
+                    <span class="plan-notice__icon">📋</span>
+                    <span>每周7天，每天10-15分钟。重点是「夹紧」，把小肚子练到平坦，主人才会奖励你~</span>
+                </div>
+                <div class="exercise-list" id="exercises-daily">
+                    <div class="exercise-item" data-exercise="0">
+                        <div class="exercise-item__num">1</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">真空收腹</div>
+                            <div class="exercise-item__sets">4组，每组30秒</div>
+                            <div class="exercise-item__tip">把气吐干净，肚脐死命往里吸~主人要看到你的小腰一圈圈变细♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="1">
+                        <div class="exercise-item__num">2</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">平板支撑</div>
+                            <div class="exercise-item__sets">3组，每组45-60秒</div>
+                            <div class="exercise-item__tip">身体绷成一条线，屁股不许翘~抖也给我撑住，贱货♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="2">
+                        <div class="exercise-item__num">3</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">仰卧交替抬腿</div>
+                            <div class="exercise-item__sets">3组，每组30-40秒</div>
+                            <div class="exercise-item__tip">双手垫在屁股下面，腿伸直交替摆~小肚子给我收平，不许鼓♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="3">
+                        <div class="exercise-item__num">4</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">侧支撑</div>
+                            <div class="exercise-item__sets">左右各2组，每组30秒</div>
+                            <div class="exercise-item__tip">把腰侧的赘肉夹没~主人要的是凹进去的沙漏腰♠（左右各做）</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-primary workout-start-btn" data-plan="daily">开始训练 ♠</button>
+            </section>
+
+            <!-- Screen: 蜜桃臀与腿部 (Day 1) -->
+            <section id="fit-day1" class="screen">
+                <div class="screen-back">
+<button class="btn-back" id="btn-day1-back">&larr; 回去</button>
+                    <span class="screen-back__title">🍑 蜜桃臀与腿部</span>
+                </div>
+                <div class="plan-notice">
+                    <span class="plan-notice__icon">📋</span>
+                    <span>先做完「每日腹部」再来~乖女孩不许偷懒。</span>
+                </div>
+                <div class="exercise-list" id="exercises-day1">
+                    <div class="exercise-item" data-exercise="0">
+                        <div class="exercise-item__num">1</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">臀桥</div>
+                            <div class="exercise-item__sets">4组 x 15-20次</div>
+                            <div class="exercise-item__tip">顶到最高点给我夹紧屁股~大腿别偷力，主人盯着呢♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="1">
+                        <div class="exercise-item__num">2</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">跪姿后踢腿</div>
+                            <div class="exercise-item__sets">3组 x 15次/侧</div>
+                            <div class="exercise-item__tip">用屁股发力踢~感受臀肉在收紧，蜜桃臀就是这么练出来的♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="2">
+                        <div class="exercise-item__num">3</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">跪姿侧抬腿</div>
+                            <div class="exercise-item__sets">3组 x 15次/侧</div>
+                            <div class="exercise-item__tip">侧面抬起来~把臀型修圆修翘，让主人看了想拍♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="3">
+                        <div class="exercise-item__num">4</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">相扑深蹲</div>
+                            <div class="exercise-item__sets">4组 x 15次</div>
+                            <div class="exercise-item__tip">蹲深一点~屁股要饱满，腿要纤细，骚货的标配身材♠</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-primary workout-start-btn" data-plan="day1">开始训练 ♠</button>
+                <div class="plan-warning">
+                    <span class="plan-warning__icon">⚠️</span>
+                    <span>练完<strong>必须</strong>花10分钟拉伸！主人要的是柔软的小骚货，不是硬邦邦的肌肉块~不拉伸就罚你。</span>
+                </div>
+            </section>
+
+            <!-- Screen: 腰腹强化与体态 (Day 2) -->
+            <section id="fit-day2" class="screen">
+                <div class="screen-back">
+<button class="btn-back" id="btn-day2-back">&larr; 回去</button>
+                    <span class="screen-back__title">🔥 腰腹强化与体态</span>
+                </div>
+                <div class="plan-notice">
+                    <span class="plan-notice__icon">📋</span>
+                    <span>先做完「每日腹部」再来~乖女孩不许偷懒。</span>
+                </div>
+                <div class="exercise-list" id="exercises-day2">
+                    <div class="exercise-item" data-exercise="0">
+                        <div class="exercise-item__num">1</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">俄罗斯转体</div>
+                            <div class="exercise-item__sets">3组 x 20次</div>
+                            <div class="exercise-item__tip">转起来~把腰两侧的肉拧干，主人要看到你的沙漏腰♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="1">
+                        <div class="exercise-item__num">2</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">鸟狗式</div>
+                            <div class="exercise-item__sets">3组 x 12次/侧</div>
+                            <div class="exercise-item__tip">稳住核心别晃~乖女孩要有控制力，身体是主人的♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="2">
+                        <div class="exercise-item__num">3</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">靠墙天使</div>
+                            <div class="exercise-item__sets">3组 x 15次</div>
+                            <div class="exercise-item__tip">把胸挺起来~圆肩驼背的骚货不配被主人夸♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="3">
+                        <div class="exercise-item__num">4</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">猫牛式拉伸</div>
+                            <div class="exercise-item__sets">3组 x 10次</div>
+                            <div class="exercise-item__tip">像猫一样弓起再塌下~把背练柔软，骚货要从骨子里透出媚♠</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-primary workout-start-btn" data-plan="day2">开始训练 ♠</button>
+                <div class="plan-warning">
+                    <span class="plan-warning__icon">⚠️</span>
+                    <span>练完<strong>必须</strong>花10分钟拉伸！主人要的是柔软的小骚货，不是硬邦邦的肌肉块~不拉伸就罚你。</span>
+                </div>
+            </section>
+
+            <!-- Screen: 胸部与手臂 (Day 3) -->
+            <section id="fit-day3" class="screen">
+                <div class="screen-back">
+<button class="btn-back" id="btn-day3-back">&larr; 回去</button>
+                    <span class="screen-back__title">💪 胸部与手臂</span>
+                </div>
+                <div class="plan-notice">
+                    <span class="plan-notice__icon">📋</span>
+                    <span>先做完「每日腹部」再来~乖女孩不许偷懒。</span>
+                </div>
+                <div class="exercise-list" id="exercises-day3">
+                    <div class="exercise-item" data-exercise="0">
+                        <div class="exercise-item__num">1</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">平躺哑铃飞鸟</div>
+                            <div class="exercise-item__sets">4组 x 12-15次</div>
+                            <div class="exercise-item__tip">慢慢打开再夹紧~把胸型聚拢挺起来，主人喜欢看♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="1">
+                        <div class="exercise-item__num">2</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">上斜哑铃推举</div>
+                            <div class="exercise-item__sets">4组 x 12次</div>
+                            <div class="exercise-item__tip">只推上胸~要的是挺拔不是厚实，骚货的胸要又翘又软♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="2">
+                        <div class="exercise-item__num">3</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">哑铃颈后臂屈伸</div>
+                            <div class="exercise-item__sets">4组 x 10-12次</div>
+                            <div class="exercise-item__tip">把手臂后面的软肉夹紧~拜拜肉全给我消掉，不许有♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="3">
+                        <div class="exercise-item__num">4</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">哑铃侧平举</div>
+                            <div class="exercise-item__sets">4组 x 12-15次</div>
+                            <div class="exercise-item__tip">轻重量慢慢举~肩膀要直角线条，穿吊带才好看♠</div>
+                        </div>
+                    </div>
+                    <div class="exercise-item" data-exercise="4">
+                        <div class="exercise-item__num">5</div>
+                        <div class="exercise-item__body">
+                            <div class="exercise-item__name">跪姿俯卧撑</div>
+                            <div class="exercise-item__sets">3组 x 力竭</div>
+                            <div class="exercise-item__tip">手窄一点~把胸和手臂最后一点力气全榨干，骚货不许留力♠</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-primary workout-start-btn" data-plan="day3">开始训练 ♠</button>
+                <div class="plan-warning">
+                    <span class="plan-warning__icon">⚠️</span>
+                    <span>练完<strong>必须</strong>花10分钟拉伸！主人要的是柔软的小骚货，不是硬邦邦的肌肉块~不拉伸就罚你。</span>
+                </div>
+            </section>
+
+            <!-- Screen: 训练计时器 (通用) -->
+            <section id="fit-workout-timer" class="screen">
+                <div class="center-content">
+                    <!-- 总进度 -->
+                    <div class="workout-progress-header">
+                        <span id="wk-plan-name" class="wk-plan-name">每日束腰与核心</span>
+                        <span id="wk-overall" class="wk-overall">动作 1 / 4</span>
+                    </div>
+                    <div class="progress-bar" style="width:100%;">
+                        <div id="wk-overall-bar" class="progress-bar__fill" style="width:0%;"></div>
+                    </div>
+
+                    <!-- 当前动作信息 -->
+                    <div class="wk-current-exercise" id="wk-current-exercise">
+                        <div class="wk-current-exercise__name" id="wk-exercise-name">真空收腹</div>
+                        <div class="wk-current-exercise__sets" id="wk-exercise-sets">第 1 组 / 共 4 组</div>
+                        <div class="wk-current-exercise__tip" id="wk-exercise-tip">吐尽空气，肚脐死死吸向脊柱。</div>
+                    </div>
+
+                    <!-- 计时圆环 -->
+                    <div class="timer__circle">
+                        <svg viewBox="0 0 220 220">
+                            <circle class="timer__circle-bg" cx="110" cy="110" r="100"></circle>
+                            <circle id="wk-timer-progress" class="timer__circle-progress" cx="110" cy="110" r="100"
+                                    stroke-dasharray="628.32" stroke-dashoffset="628.32"></circle>
+                        </svg>
+                        <div id="wk-timer-time" class="timer__time">30</div>
+                    </div>
+
+                    <div id="wk-timer-phase" class="timer__action">*** 训练中 ***</div>
+                    <div id="wk-encouragement" class="timer__encouragement"></div>
+
+                    <!-- 控制按钮 -->
+                    <div class="ct-controls">
+                        <button class="ctrl-btn" id="btn-wk-pause">
+                            <span id="wk-pause-icon">⏸</span>
+                        </button>
+                        <button class="ctrl-btn" id="btn-wk-skip" title="跳过当前组">⏭</button>
+                        <button class="ctrl-btn ctrl-btn--danger" id="btn-wk-stop">⏹</button>
+                    </div>
+
+                    <!-- 组内进度 -->
+                    <div class="progress-bar" style="width:100%;">
+                        <div id="wk-set-bar" class="progress-bar__fill" style="width:0%;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen: 训练完成 -->
+            <section id="fit-workout-done" class="screen">
+                <div class="center-content">
+                    <div class="finish__icon">♠ ♠ ♠</div>
+                    <div class="finish__title">做完了！乖女孩~</div>
+                    <div class="finish__message" id="wk-done-msg">每一滴汗都在让你变成主人最满意的小骚货~<br>主人为你骄傲♠</div>
+                    <div class="finish__stats">
+                        <div class="finish__stat">
+                            <div class="finish__stat-value" id="wk-done-exercises">4</div>
+                            <div class="finish__stat-label">动作数</div>
+                        </div>
+                        <div class="finish__stat">
+                            <div class="finish__stat-value" id="wk-done-sets">14</div>
+                            <div class="finish__stat-label">总组数</div>
+                        </div>
+                        <div class="finish__stat">
+                            <div class="finish__stat-value" id="wk-done-time">12:30</div>
+                            <div class="finish__stat-label">总用时</div>
+                        </div>
+                    </div>
+                    <div class="finish__actions">
+                        <button class="btn-primary" id="btn-wk-again">再来一次 ♠</button>
+                        <button class="btn-secondary" id="btn-wk-home">回去吧~</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen: Vacuum Belly Menu (选择难度) — 隐藏保留 -->
+            <section id="fit-menu" class="screen">
+                <div class="screen-back">
+<button class="btn-back" id="btn-vacuum-back">&larr; 回去</button>
+                    <span class="screen-back__title">真空收腹</span>
+                </div>
+                <div class="mode-list">
+                    <button class="mode-btn" data-fit-mode="beginner">
+                        <div class="mode-btn__icon">♠</div>
+                        <div class="mode-btn__text">
+                            <div class="mode-btn__name">入门</div>
+                            <div class="mode-btn__detail">夹紧 10秒 / 放松 10秒 / 5 轮</div>
+                        </div>
+                        <div class="mode-btn__arrow">&rsaquo;</div>
+                    </button>
+                    <button class="mode-btn" data-fit-mode="advanced">
+                        <div class="mode-btn__icon">♠</div>
+                        <div class="mode-btn__text">
+                            <div class="mode-btn__name">进阶</div>
+                            <div class="mode-btn__detail">夹紧 15秒 / 放松 10秒 / 5 轮</div>
+                        </div>
+                        <div class="mode-btn__arrow">&rsaquo;</div>
+                    </button>
+                    <button class="mode-btn" data-fit-mode="challenge">
+                        <div class="mode-btn__icon">♠</div>
+                        <div class="mode-btn__text">
+                            <div class="mode-btn__name">挑战</div>
+                            <div class="mode-btn__detail">夹紧 20秒 / 放松 10秒 / 5 轮</div>
+                        </div>
+                        <div class="mode-btn__arrow">&rsaquo;</div>
+                    </button>
+                    <button class="mode-btn" id="btn-fit-custom">
+                        <div class="mode-btn__icon">+</div>
+                        <div class="mode-btn__text">
+                            <div class="mode-btn__name">自定义</div>
+                            <div class="mode-btn__detail">自己设定节奏~</div>
+                        </div>
+                        <div class="mode-btn__arrow">&rsaquo;</div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Screen: Fitness Custom -->
+            <section id="fit-custom" class="screen">
+                <div class="custom-form">
+                    <div class="card">
+                    <div class="card__label">♠ 自定义模式</div>
+                        <div class="card__title">自己设定训练参数~</div>
+                    </div>
+                    <div class="input-group">
+                        <label>夹紧时间（秒）</label>
+                        <input type="number" id="input-hold" value="10" min="1" max="120" inputmode="numeric">
+                    </div>
+                    <div class="input-group">
+                        <label>放松时间（秒）</label>
+                        <input type="number" id="input-rest" value="10" min="1" max="120" inputmode="numeric">
+                    </div>
+                    <div class="input-group">
+                        <label>轮数</label>
+                        <input type="number" id="input-rounds" value="5" min="1" max="20" inputmode="numeric">
+                    </div>
+                    <button class="btn-primary" id="btn-start-custom">开始训练 ♠</button>
+                    <button class="btn-secondary" id="btn-fit-custom-back">&larr; 返回</button>
+                </div>
+            </section>
+
+            <!-- Screen: Fitness Ready -->
+            <section id="fit-ready" class="screen">
+                <div class="center-content">
+                    <div class="card" style="width:100%;text-align:left;">
+                        <div class="card__label">♠ 准备好了吗~</div>
+                        <div class="card__title" id="ready-mode">Beginner</div>
+                        <div class="card__desc" id="ready-detail">Hold 10s / Rest 10s / 5 Rounds</div>
+                    </div>
+                    <div class="howto">
+                        <div class="howto__title">♠ 真空收腹怎么做</div>
+                        <ul class="howto__list">
+                            <li>站好或跪好，挺直脊柱</li>
+                            <li>把气全部吐干净</li>
+                            <li>肚脐死命往脊柱方向吸</li>
+                            <li>夹住！保持呼吸</li>
+                            <li>慢慢吸气放松~</li>
+                        </ul>
+                    </div>
+                    <button class="btn-primary" id="btn-fit-start">开始 ♠</button>
+                    <button class="btn-secondary" id="btn-ready-back">&larr; 返回</button>
+                </div>
+            </section>
+
+            <!-- Screen: Fitness Timer -->
+            <section id="fit-timer" class="screen">
+                <div class="center-content">
+                    <div id="fit-timer-round" class="timer__round">Round 1 / 5</div>
+                    <div class="timer__circle">
+                        <svg viewBox="0 0 220 220">
+                            <circle class="timer__circle-bg" cx="110" cy="110" r="100"></circle>
+                            <circle id="fit-timer-progress" class="timer__circle-progress" cx="110" cy="110" r="100"
+                                    stroke-dasharray="628.32" stroke-dashoffset="628.32"></circle>
+                        </svg>
+                        <div id="fit-timer-time" class="timer__time">10</div>
+                    </div>
+                    <div id="fit-timer-action" class="timer__action">*** HOLD IT! ***</div>
+                    <div id="fit-timer-phase" class="timer__phase">♠ HOLD IT!</div>
+                    <div id="fit-timer-encouragement" class="timer__encouragement"></div>
+                    <div class="progress-bar" style="width:100%;">
+                        <div id="fit-total-progress" class="progress-bar__fill" style="width:0%;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen: Fitness Finish -->
+            <section id="fit-finish" class="screen">
+                <div class="center-content">
+                    <div class="finish__icon">♠ ♠ ♠</div>
+                    <div class="finish__title">做完了！乖骚货~</div>
+                    <div class="finish__message">你的每一次夹紧都算数~<br>主人为你骄傲♠</div>
+                    <div class="finish__stats">
+                        <div class="finish__stat">
+                            <div class="finish__stat-value" id="finish-rounds">5</div>
+                        <div class="finish__stat-label">轮数</div>
+                        </div>
+                        <div class="finish__stat">
+                            <div class="finish__stat-value" id="finish-time">1:30</div>
+                            <div class="finish__stat-label">总用时</div>
+                        </div>
+                    </div>
+                    <div class="finish__actions">
+                        <button class="btn-primary" id="btn-fit-again">再来一次 ♠</button>
+                        <button class="btn-secondary" id="btn-fit-home">回去吧~</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
+        <!--  TAB: TIMER (Custom Countdown Timer)                         -->
+        <!-- ============================================================ -->
+        <div id="tab-timer" class="tab-content">
+
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Countdown Timer</h1>
+                <p class="header__subtitle">♠ 乖乖计时，不许偷懒 ♠</p>
+            </header>
+
+            <!-- Screen: Timer Setup -->
+            <section id="ct-setup" class="screen active">
+                <div class="custom-form">
+                    <!-- Quick presets -->
+                    <div class="card__label" style="padding:0 4px;">♠ 快速开始</div>
+                    <div class="preset-grid">
+                        <button class="preset-btn" data-ct-seconds="60">1 min</button>
+                        <button class="preset-btn" data-ct-seconds="180">3 min</button>
+                        <button class="preset-btn" data-ct-seconds="300">5 min</button>
+                        <button class="preset-btn" data-ct-seconds="600">10 min</button>
+                        <button class="preset-btn" data-ct-seconds="900">15 min</button>
+                        <button class="preset-btn" data-ct-seconds="1800">30 min</button>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="card__label" style="padding:0 4px;">♠ 自定义时间</div>
+                    <div class="time-picker">
+                        <div class="time-picker__group">
+                            <input type="number" id="ct-hours" value="0" min="0" max="23" inputmode="numeric">
+                            <span class="time-picker__label">H</span>
+                        </div>
+                        <span class="time-picker__sep">:</span>
+                        <div class="time-picker__group">
+                            <input type="number" id="ct-minutes" value="5" min="0" max="59" inputmode="numeric">
+                            <span class="time-picker__label">M</span>
+                        </div>
+                        <span class="time-picker__sep">:</span>
+                        <div class="time-picker__group">
+                            <input type="number" id="ct-seconds" value="0" min="0" max="59" inputmode="numeric">
+                            <span class="time-picker__label">S</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>标签（选填）</label>
+                        <input type="text" id="ct-label" placeholder="比如：拉伸、冥想、夹紧练习..." maxlength="30">
+                    </div>
+
+                    <button class="btn-primary" id="btn-ct-start">开始计时 ♠</button>
+                </div>
+            </section>
+
+            <!-- Screen: Timer Running -->
+            <section id="ct-running" class="screen">
+                <div class="center-content">
+                    <div id="ct-running-label" class="timer__phase">♠ COUNTDOWN</div>
+                    <div class="timer__circle timer__circle--large">
+                        <svg viewBox="0 0 220 220">
+                            <circle class="timer__circle-bg" cx="110" cy="110" r="100"></circle>
+                            <circle id="ct-progress" class="timer__circle-progress" cx="110" cy="110" r="100"
+                                    stroke-dasharray="628.32" stroke-dashoffset="628.32"></circle>
+                        </svg>
+                        <div id="ct-display" class="timer__time timer__time--small">05:00</div>
+                    </div>
+                    <div class="ct-controls">
+                        <button class="ctrl-btn" id="btn-ct-pause">
+                            <span id="ct-pause-icon">⏸</span>
+                        </button>
+                        <button class="ctrl-btn ctrl-btn--danger" id="btn-ct-stop">⏹</button>
+                    </div>
+                    <div class="progress-bar" style="width:100%;">
+                        <div id="ct-bar" class="progress-bar__fill" style="width:0%;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen: Timer Done -->
+            <section id="ct-done" class="screen">
+                <div class="center-content">
+                    <div class="finish__icon">♠ ♠ ♠</div>
+                    <div class="finish__title">时间到！</div>
+                    <div id="ct-done-label" class="finish__message">乖女孩~你做到了♠</div>
+                    <div class="finish__actions">
+                        <button class="btn-primary" id="btn-ct-restart">再来一次 ♠</button>
+                        <button class="btn-secondary" id="btn-ct-new">新计时</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
+        <!--  TAB: MUSIC (Music Player)                                   -->
+        <!-- ============================================================ -->
+        <div id="tab-music" class="tab-content">
+
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Music Player</h1>
+                <p class="header__subtitle">♠ 主人给你挑的调调 ♠</p>
+            </header>
+
+            <section class="screen active music-screen">
+                <!-- Now Playing -->
+                <div class="now-playing" id="now-playing">
+                    <div class="now-playing__art" id="music-art">♠</div>
+                    <div class="now-playing__info">
+                        <div class="now-playing__title" id="music-title">还没选曲呢~</div>
+                        <div class="now-playing__artist" id="music-artist">快加点音乐，骚货~</div>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div class="music-progress">
+                    <input type="range" id="music-seek" class="music-seek" min="0" max="100" value="0" step="0.1">
+                    <div class="music-progress__times">
+                        <span id="music-current">0:00</span>
+                        <span id="music-duration">0:00</span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="music-controls">
+                    <button class="music-ctrl" id="btn-music-shuffle" title="Shuffle">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+                    </button>
+                    <button class="music-ctrl" id="btn-music-prev" title="Previous">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+                    <button class="music-ctrl music-ctrl--play" id="btn-music-play" title="Play">
+                        <svg id="icon-play" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="icon-pause" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 19h4V5H6zm8-14v14h4V5z"/></svg>
+                    </button>
+                    <button class="music-ctrl" id="btn-music-next" title="Next">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                    </button>
+                    <button class="music-ctrl" id="btn-music-repeat" title="Repeat">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                    </button>
+                </div>
+
+                <!-- Volume -->
+                <div class="music-volume">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+                    <input type="range" id="music-volume" class="music-seek" min="0" max="100" value="80" step="1">
+                </div>
+
+                <!-- Playlist -->
+                <div class="playlist-header">
+                    <span class="playlist-header__title">♠ 播放列表</span>
+                    <label class="btn-add-music" id="btn-add-music">
+                        + 添加音乐
+                        <input type="file" id="music-file-input" accept="audio/*" multiple style="display:none;position:absolute;width:0;height:0;overflow:hidden;">
+                    </label>
+                </div>
+                <div class="playlist" id="playlist">
+                    <div class="playlist__empty">
+                        <p>还没有歌呢~</p>
+                        <p class="playlist__hint">点「添加音乐」来加载~</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
+        <!--  TAB: CALENDAR (训练日历)                                     -->
+        <!-- ============================================================ -->
+        <div id="tab-calendar" class="tab-content">
+
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Training Calendar</h1>
+                <p class="header__subtitle">♠ 主人在盯着你的打卡记录 ♠</p>
+            </header>
+
+            <section class="screen active calendar-screen">
+                <!-- 月份导航 -->
+                <div class="cal-nav">
+                    <button class="cal-nav__btn" id="btn-cal-prev">&lsaquo;</button>
+                    <span class="cal-nav__title" id="cal-month-title">April 2026</span>
+                    <button class="cal-nav__btn" id="btn-cal-next">&rsaquo;</button>
+                </div>
+
+                <!-- 日历网格 -->
+                <div class="cal-weekdays">
+                    <span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span>
+                </div>
+                <div class="cal-grid" id="cal-grid">
+                    <!-- JS 动态生成 -->
+                </div>
+
+                <!-- 当日任务面板 -->
+                <div class="cal-day-panel" id="cal-day-panel">
+                    <div class="cal-day-panel__header">
+                        <span class="cal-day-panel__date" id="cal-selected-date">Today</span>
+                        <span class="cal-day-panel__count" id="cal-done-count">0 / 4 completed</span>
+                    </div>
+                    <div class="cal-task-list" id="cal-task-list">
+                        <label class="cal-task" data-task="daily">
+                            <input type="checkbox" class="cal-task__check">
+                            <div class="cal-task__icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c-4.97 0-9-2.69-9-6v-2c0-3.31 4.03-6 9-6s9 2.69 9 6v2c0 3.31-4.03 6-9 6z"/></svg>
+                            </div>
+                            <span class="cal-task__name">每日束腰与核心</span>
+                            <span class="cal-task__badge">♠</span>
+                        </label>
+                        <label class="cal-task" data-task="day1">
+                            <input type="checkbox" class="cal-task__check">
+                            <div class="cal-task__icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><path d="M12 8v4"/><path d="M9 12l-3 8h12l-3-8"/></svg>
+                            </div>
+                            <span class="cal-task__name">蜜桃臀与腿部</span>
+                            <span class="cal-task__badge">♠</span>
+                        </label>
+                        <label class="cal-task" data-task="day2">
+                            <input type="checkbox" class="cal-task__check">
+                            <div class="cal-task__icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                            </div>
+                            <span class="cal-task__name">腰腹强化与体态</span>
+                            <span class="cal-task__badge">♠</span>
+                        </label>
+                        <label class="cal-task" data-task="day3">
+                            <input type="checkbox" class="cal-task__check">
+                            <div class="cal-task__icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5a3.5 3.5 0 1 0 0-7M17.5 6.5a3.5 3.5 0 1 1 0-7"/><path d="M6.5 3h11"/></svg>
+                            </div>
+                            <span class="cal-task__name">胸部与手臂</span>
+                            <span class="cal-task__badge">♠</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 统计 -->
+                <div class="cal-stats" id="cal-stats">
+                    <div class="cal-stats__item">
+                        <div class="cal-stats__value" id="cal-streak">0</div>
+                        <div class="cal-stats__label">连续打卡</div>
+                    </div>
+                    <div class="cal-stats__item">
+                        <div class="cal-stats__value" id="cal-month-total">0</div>
+                        <div class="cal-stats__label">本月乖乖练了</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
+        <!--  BOTTOM TAB BAR                                              -->
+        <!-- ============================================================ -->
+        <nav class="tab-bar">
+            <button class="tab-bar__item active" data-tab="tab-fitness">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                <span>Fitness</span>
+            </button>
+            <button class="tab-bar__item" data-tab="tab-calendar">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+                <span>Calendar</span>
+            </button>
+            <button class="tab-bar__item" data-tab="tab-timer">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Timer</span>
+            </button>
+            <button class="tab-bar__item" data-tab="tab-music">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <span>Music</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- ===== Countdown Overlay ===== -->
+    <div id="countdown-overlay" class="countdown-overlay">
+        <div class="countdown__text">准备好了吗，小骚货...</div>
+        <div id="countdown-number" class="countdown__number">5</div>
+        <div class="countdown__text">深呼吸，放松那个小穴~</div>
+    </div>
+
+    <!-- Hidden audio element -->
+    <audio id="audio-player" preload="auto"></audio>
+
+    <script src="./app.js"></script>
+</body>
+</html>
