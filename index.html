@@ -642,8 +642,8 @@
                 <div class="playlist-header">
                     <span class="playlist-header__title">♠ 播放列表</span>
                     <label class="btn-add-music" id="btn-add-music">
-                        + 添加音乐
-                        <input type="file" id="music-file-input" accept="audio/*" multiple style="display:none;position:absolute;width:0;height:0;overflow:hidden;">
+                        + 添加
+                        <input type="file" id="music-file-input" accept="audio/*,video/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma,.mp4,.webm,.mkv,.avi,.mov" multiple style="display:none;position:absolute;width:0;height:0;overflow:hidden;">
                     </label>
                 </div>
                 <div class="playlist" id="playlist">
@@ -652,6 +652,13 @@
                         <p class="playlist__hint">点「添加音乐」来加载~</p>
                     </div>
                 </div>
+                <!-- 大面积拖拽/点击添加区域（空列表时显示） -->
+                <label class="music-drop-zone" id="music-drop-zone" for="music-file-input-alt">
+                    <div class="music-drop-zone__icon">♠</div>
+                    <div class="music-drop-zone__text">点击这里添加音乐/视频</div>
+                    <div class="music-drop-zone__hint">支持 MP3 / WAV / M4A / FLAC / MP4 等格式</div>
+                    <input type="file" id="music-file-input-alt" accept="audio/*,video/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma,.mp4,.webm,.mkv,.avi,.mov" multiple style="display:none;position:absolute;width:0;height:0;overflow:hidden;">
+                </label>
             </section>
         </div>
 

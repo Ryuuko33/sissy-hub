@@ -741,24 +741,28 @@ function musicFormatTime(sec) {
 
 function musicRenderPlaylist() {
     const container = $('#playlist');
+    const dropZone = $('#music-drop-zone');
     if (musicState.playlist.length === 0) {
     container.innerHTML = `
             <div class="playlist__empty">
                 <p>还没有歌呢~</p>
-                <p class="playlist__hint">点「添加音乐」来加载~</p>
+                <p class="playlist__hint">点下方区域添加音乐/视频~</p>
             </div>`;
+        if (dropZone) dropZone.classList.remove('hidden');
         return;
     }
     container.innerHTML = musicState.playlist.map((track, i) => `
         <div class="playlist__item ${i === musicState.currentIndex ? 'active' : ''}" data-index="${i}">
             <div class="playlist__item-num">${i === musicState.currentIndex ? '♠' : (i + 1)}</div>
             <div class="playlist__item-info">
-                <div class="playlist__item-title">${track.name}</div>
+                <div class="playlist__item-title">${track.isVideo ? '🎬 ' : ''}${track.name}</div>
                 <div class="playlist__item-duration">${track.duration || '--:--'}</div>
             </div>
             <button class="playlist__item-remove" data-remove="${i}">&times;</button>
         </div>
     `).join('');
+
+    if (dropZone) dropZone.classList.add('hidden');
 
     // 绑定点击播放
     container.querySelectorAll('.playlist__item').forEach((item) => {
@@ -779,17 +783,30 @@ function musicRenderPlaylist() {
 
 function musicAddFiles(files) {
     Array.from(files).forEach((file) => {
+        // 判断是否为音频或视频文件
+        const isAudio = file.type.startsWith('audio/');
+        const isVideo = file.type.startsWith('video/');
+        // 通过扩展名兜底判断
+        const ext = file.name.split('.').pop().toLowerCase();
+        const audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'wma', 'opus', 'webm'];
+        const videoExts = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'wmv', 'flv'];
+        const isValidAudio = isAudio || audioExts.includes(ext);
+        const isValidVideo = isVideo || videoExts.includes(ext);
+
+        if (!isValidAudio && !isValidVideo) return; // 跳过不支持的文件
+
         const objectUrl = URL.createObjectURL(file);
         // 获取文件名（去掉扩展名）
         const name = file.name.replace(/\.[^/.]+$/, '');
-        const track = { name, file, objectUrl, duration: null };
+        const track = { name, file, objectUrl, duration: null, isVideo: isValidVideo && !isValidAudio };
         musicState.playlist.push(track);
 
-        // 获取时长
-        const tempAudio = new Audio();
-        tempAudio.src = objectUrl;
-        tempAudio.addEventListener('loadedmetadata', () => {
-            track.duration = musicFormatTime(tempAudio.duration);
+        // 获取时长（视频文件用 video 元素，音频用 audio 元素）
+        const tempMedia = track.isVideo ? document.createElement('video') : new Audio();
+        tempMedia.preload = 'metadata';
+        tempMedia.src = objectUrl;
+        tempMedia.addEventListener('loadedmetadata', () => {
+            track.duration = musicFormatTime(tempMedia.duration);
             musicRenderPlaylist();
         });
     });
@@ -901,13 +918,15 @@ function musicToggleRepeat() {
 }
 
 function initMusicPlayer() {
-    // 添加文件
-    $('#music-file-input')?.addEventListener('change', (e) => {
+    // 添加文件（主按钮 + 备用大区域按钮）
+    const fileInputHandler = (e) => {
         if (e.target.files.length > 0) {
             musicAddFiles(e.target.files);
             e.target.value = ''; // 允许重复选择
         }
-    });
+    };
+    $('#music-file-input')?.addEventListener('change', fileInputHandler);
+    $('#music-file-input-alt')?.addEventListener('change', fileInputHandler);
 
     // 播放控制
     $('#btn-music-play')?.addEventListener('click', musicTogglePlay);
