@@ -575,14 +575,61 @@ body::before {
 }
 .music-volume .music-seek { flex: 1; }
 
-/* Playlist */
-.playlist-header {
-    display: flex; align-items: center; justify-content: space-between;
+/* Playlist Manager */
+.pl-manager {
+    display: flex; flex-direction: column; gap: 8px;
     padding: 0 4px;
 }
-.playlist-header__title {
-    font-size: 0.8rem; color: var(--accent); font-weight: 600; letter-spacing: 1px;
+.pl-manager__row {
+    display: flex; align-items: center; gap: 6px;
 }
+.pl-manager__row--sub {
+    justify-content: space-between;
+}
+.pl-selector {
+    flex: 1; min-width: 0;
+    background: var(--bg-card); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 10px; font-size: 0.78rem;
+    font-family: inherit; outline: none;
+    -webkit-appearance: none; appearance: none;
+    cursor: pointer;
+}
+.pl-selector:focus { border-color: var(--accent); }
+.pl-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(217,70,239,0.08); border: 1px solid rgba(217,70,239,0.2);
+    color: var(--accent-light); font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition);
+    flex-shrink: 0;
+    -webkit-appearance: none; appearance: none;
+}
+.pl-btn:active { background: rgba(217,70,239,0.2); }
+.pl-btn--danger { color: var(--danger); }
+.pl-btn--danger:active { background: rgba(244,114,182,0.15); }
+
+/* Sort Group */
+.sort-group {
+    display: flex; align-items: center; gap: 4px;
+}
+.sort-label {
+    font-size: 0.7rem; color: var(--text-muted); margin-right: 2px;
+}
+.sort-btn {
+    font-size: 0.7rem; color: var(--text-muted);
+    background: none; border: 1px solid rgba(217,70,239,0.15);
+    border-radius: 12px; padding: 3px 10px;
+    cursor: pointer; transition: var(--transition);
+    font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+}
+.sort-btn.active {
+    color: var(--accent); border-color: var(--accent);
+    background: rgba(217,70,239,0.1);
+}
+.sort-btn:active { background: rgba(217,70,239,0.15); }
+
 .btn-add-music {
     font-size: 0.78rem; color: var(--accent-light);
     background: rgba(217,70,239,0.1); border: 1px solid rgba(217,70,239,0.25);

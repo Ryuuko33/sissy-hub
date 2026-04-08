@@ -638,14 +638,28 @@
                     <input type="range" id="music-volume" class="music-seek" min="0" max="100" value="80" step="1">
                 </div>
 
-                <!-- Playlist -->
-                <div class="playlist-header">
-                    <span class="playlist-header__title">♠ 播放列表</span>
-                    <label class="btn-add-music" id="btn-add-music">
-                        + 添加
-                        <input type="file" id="music-file-input" accept="audio/*,video/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma,.mp4,.webm,.mkv,.avi,.mov" multiple style="display:none;position:absolute;width:0;height:0;overflow:hidden;">
-                    </label>
+                <!-- Playlist Management -->
+                <div class="pl-manager">
+                    <div class="pl-manager__row">
+                        <select class="pl-selector" id="playlist-selector"></select>
+                        <button class="pl-btn" id="btn-pl-new" title="新建清单">+</button>
+                        <button class="pl-btn" id="btn-pl-rename" title="重命名">✎</button>
+                        <button class="pl-btn pl-btn--danger" id="btn-pl-delete" title="删除清单">🗑</button>
+                    </div>
+                    <div class="pl-manager__row pl-manager__row--sub">
+                        <div class="sort-group">
+                            <span class="sort-label">排序:</span>
+                            <button class="sort-btn active" id="btn-sort-time">时间↑</button>
+                            <button class="sort-btn" id="btn-sort-name">名称</button>
+                        </div>
+                        <label class="btn-add-music" id="btn-add-music">
+                            + 添加
+                            <input type="file" id="music-file-input" accept="audio/*,video/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma,.mp4,.webm,.mkv,.avi,.mov" multiple style="display:none;position:absolute;width:0;height:0;overflow:hidden;">
+                        </label>
+                    </div>
                 </div>
+
+                <!-- Playlist -->
                 <div class="playlist" id="playlist">
                     <div class="playlist__empty">
                         <p>还没有歌呢~</p>

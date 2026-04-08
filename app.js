@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.2.1';
+const APP_VERSION = 'v1.3.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -722,18 +722,133 @@ function initCountdownTimer() {
 }
 
 /* ============================================
- * MODULE 3: MUSIC PLAYER
+ * MODULE 3: MUSIC PLAYER (with IndexedDB persistence & playlists)
  * ============================================ */
+const MUSIC_DB_NAME = 'sissy_music_db';
+const MUSIC_DB_VERSION = 1;
+const MUSIC_META_KEY = 'sissy_music_meta';
+
 const musicState = {
-    playlist: [],       // { name, file, objectUrl, duration }
+    playlists: [],          // [{ id, name, tracks: [{ id, name, blobKey, duration, durationSec, addedAt, isVideo }] }]
+    currentPlaylistId: null,
     currentIndex: -1,
     isPlaying: false,
     shuffle: false,
-    repeat: 'none'      // 'none' | 'all' | 'one'
+    repeat: 'none',         // 'none' | 'all' | 'one'
+    sortMode: 'addedAt',    // 'addedAt' | 'name'
+    sortAsc: true
 };
 
 const audio = document.getElementById('audio-player');
 
+/* ---------- IndexedDB helpers ---------- */
+function musicOpenDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(MUSIC_DB_NAME, MUSIC_DB_VERSION);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('blobs')) {
+                db.createObjectStore('blobs');
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function musicSaveBlob(key, blob) {
+    const db = await musicOpenDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('blobs', 'readwrite');
+        tx.objectStore('blobs').put(blob, key);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+}
+
+async function musicLoadBlob(key) {
+    const db = await musicOpenDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('blobs', 'readonly');
+        const req = tx.objectStore('blobs').get(key);
+        req.onsuccess = () => { db.close(); resolve(req.result); };
+        req.onerror = () => { db.close(); reject(req.error); };
+    });
+}
+
+async function musicDeleteBlob(key) {
+    const db = await musicOpenDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('blobs', 'readwrite');
+        tx.objectStore('blobs').delete(key);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+}
+
+/* ---------- Meta persistence (localStorage) ---------- */
+function musicSaveMeta() {
+    const meta = {
+        playlists: musicState.playlists.map((pl) => ({
+            id: pl.id,
+            name: pl.name,
+            tracks: pl.tracks.map((t) => ({
+                id: t.id, name: t.name, blobKey: t.blobKey,
+                duration: t.duration, durationSec: t.durationSec,
+                addedAt: t.addedAt, isVideo: t.isVideo
+            }))
+        })),
+        currentPlaylistId: musicState.currentPlaylistId,
+        sortMode: musicState.sortMode,
+        sortAsc: musicState.sortAsc
+    };
+    try { localStorage.setItem(MUSIC_META_KEY, JSON.stringify(meta)); } catch (e) {}
+}
+
+function musicLoadMeta() {
+    try {
+        const raw = localStorage.getItem(MUSIC_META_KEY);
+        if (!raw) return false;
+        const meta = JSON.parse(raw);
+        if (meta.playlists && meta.playlists.length > 0) {
+            musicState.playlists = meta.playlists;
+            musicState.currentPlaylistId = meta.currentPlaylistId || meta.playlists[0].id;
+            musicState.sortMode = meta.sortMode || 'addedAt';
+            musicState.sortAsc = meta.sortAsc !== undefined ? meta.sortAsc : true;
+            return true;
+        }
+    } catch (e) {}
+    return false;
+}
+
+function musicGenId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+/* ---------- Current playlist helper ---------- */
+function musicGetCurrentPlaylist() {
+    return musicState.playlists.find((p) => p.id === musicState.currentPlaylistId) || null;
+}
+
+function musicGetSortedTracks() {
+    const pl = musicGetCurrentPlaylist();
+    if (!pl) return [];
+    const tracks = [...pl.tracks];
+    if (musicState.sortMode === 'name') {
+        tracks.sort((a, b) => {
+            const cmp = a.name.localeCompare(b.name, 'zh-Hans');
+            return musicState.sortAsc ? cmp : -cmp;
+        });
+    } else {
+        tracks.sort((a, b) => {
+            const cmp = (a.addedAt || 0) - (b.addedAt || 0);
+            return musicState.sortAsc ? cmp : -cmp;
+        });
+    }
+    return tracks;
+}
+
+/* ---------- Format ---------- */
 function musicFormatTime(sec) {
     if (!sec || isNaN(sec)) return '0:00';
     const m = Math.floor(sec / 60);
@@ -741,11 +856,23 @@ function musicFormatTime(sec) {
     return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/* ---------- Render: Playlist selector ---------- */
+function musicRenderPlaylistSelector() {
+    const sel = $('#playlist-selector');
+    if (!sel) return;
+    sel.innerHTML = musicState.playlists.map((pl) =>
+        `<option value="${pl.id}" ${pl.id === musicState.currentPlaylistId ? 'selected' : ''}>${pl.name} (${pl.tracks.length})</option>`
+    ).join('');
+}
+
+/* ---------- Render: Track list ---------- */
 function musicRenderPlaylist() {
     const container = $('#playlist');
     const dropZone = $('#music-drop-zone');
-    if (musicState.playlist.length === 0) {
-    container.innerHTML = `
+    const tracks = musicGetSortedTracks();
+
+    if (tracks.length === 0) {
+        container.innerHTML = `
             <div class="playlist__empty">
                 <p>还没有歌呢~</p>
                 <p class="playlist__hint">点下方区域添加音乐/视频~</p>
@@ -753,16 +880,19 @@ function musicRenderPlaylist() {
         if (dropZone) dropZone.classList.remove('hidden');
         return;
     }
-    container.innerHTML = musicState.playlist.map((track, i) => `
-        <div class="playlist__item ${i === musicState.currentIndex ? 'active' : ''}" data-index="${i}">
-            <div class="playlist__item-num">${i === musicState.currentIndex ? '♠' : (i + 1)}</div>
+
+    container.innerHTML = tracks.map((track, i) => {
+        const isActive = track.id === musicState._playingTrackId;
+        return `
+        <div class="playlist__item ${isActive ? 'active' : ''}" data-track-id="${track.id}">
+            <div class="playlist__item-num">${isActive ? '♠' : (i + 1)}</div>
             <div class="playlist__item-info">
                 <div class="playlist__item-title">${track.isVideo ? '🎬 ' : ''}${track.name}</div>
                 <div class="playlist__item-duration">${track.duration || '--:--'}</div>
             </div>
-            <button class="playlist__item-remove" data-remove="${i}">&times;</button>
-        </div>
-    `).join('');
+            <button class="playlist__item-remove" data-track-id="${track.id}">&times;</button>
+        </div>`;
+    }).join('');
 
     if (dropZone) dropZone.classList.add('hidden');
 
@@ -770,7 +900,9 @@ function musicRenderPlaylist() {
     container.querySelectorAll('.playlist__item').forEach((item) => {
         item.addEventListener('click', (e) => {
             if (e.target.closest('.playlist__item-remove')) return;
-            musicPlayIndex(parseInt(item.dataset.index));
+            const trackId = item.dataset.trackId;
+            const idx = tracks.findIndex((t) => t.id === trackId);
+            musicPlayIndex(idx, tracks);
         });
     });
 
@@ -778,78 +910,158 @@ function musicRenderPlaylist() {
     container.querySelectorAll('.playlist__item-remove').forEach((btn) => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            musicRemoveTrack(parseInt(btn.dataset.remove));
+            musicRemoveTrack(btn.dataset.trackId);
         });
     });
+
+    musicRenderPlaylistSelector();
 }
 
-function musicAddFiles(files) {
-    Array.from(files).forEach((file) => {
-        // 判断是否为音频或视频文件
+/* ---------- Sort controls ---------- */
+function musicRenderSortState() {
+    const btnName = $('#btn-sort-name');
+    const btnTime = $('#btn-sort-time');
+    if (!btnName || !btnTime) return;
+
+    btnName.classList.toggle('active', musicState.sortMode === 'name');
+    btnTime.classList.toggle('active', musicState.sortMode === 'addedAt');
+
+    const arrow = musicState.sortAsc ? '↑' : '↓';
+    btnName.textContent = '名称' + (musicState.sortMode === 'name' ? arrow : '');
+    btnTime.textContent = '时间' + (musicState.sortMode === 'addedAt' ? arrow : '');
+}
+
+function musicSetSort(mode) {
+    if (musicState.sortMode === mode) {
+        musicState.sortAsc = !musicState.sortAsc;
+    } else {
+        musicState.sortMode = mode;
+        musicState.sortAsc = true;
+    }
+    musicSaveMeta();
+    musicRenderSortState();
+    musicRenderPlaylist();
+}
+
+/* ---------- Add files ---------- */
+async function musicAddFiles(files) {
+    const pl = musicGetCurrentPlaylist();
+    if (!pl) return;
+
+    const promises = Array.from(files).map(async (file) => {
         const isAudio = file.type.startsWith('audio/');
         const isVideo = file.type.startsWith('video/');
-        // 通过扩展名兜底判断
         const ext = file.name.split('.').pop().toLowerCase();
         const audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'wma', 'opus', 'webm'];
         const videoExts = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'wmv', 'flv'];
         const isValidAudio = isAudio || audioExts.includes(ext);
         const isValidVideo = isVideo || videoExts.includes(ext);
+        if (!isValidAudio && !isValidVideo) return;
 
-        if (!isValidAudio && !isValidVideo) return; // 跳过不支持的文件
-
-        const objectUrl = URL.createObjectURL(file);
-        // 获取文件名（去掉扩展名）
+        const trackId = musicGenId();
+        const blobKey = 'track_' + trackId;
         const name = file.name.replace(/\.[^/.]+$/, '');
-        const track = { name, file, objectUrl, duration: null, isVideo: isValidVideo && !isValidAudio };
-        musicState.playlist.push(track);
+        const isVideoTrack = isValidVideo && !isValidAudio;
 
-        // 获取时长（视频文件用 video 元素，音频用 audio 元素）
-        const tempMedia = track.isVideo ? document.createElement('video') : new Audio();
-        tempMedia.preload = 'metadata';
-        tempMedia.src = objectUrl;
-        tempMedia.addEventListener('loadedmetadata', () => {
-            track.duration = musicFormatTime(tempMedia.duration);
-            musicRenderPlaylist();
+        // 存储 Blob 到 IndexedDB
+        await musicSaveBlob(blobKey, file);
+
+        // 获取时长
+        const durationInfo = await new Promise((resolve) => {
+            const objectUrl = URL.createObjectURL(file);
+            const tempMedia = isVideoTrack ? document.createElement('video') : new Audio();
+            tempMedia.preload = 'metadata';
+            tempMedia.src = objectUrl;
+            const cleanup = () => { URL.revokeObjectURL(objectUrl); };
+            tempMedia.addEventListener('loadedmetadata', () => {
+                cleanup();
+                resolve({ duration: musicFormatTime(tempMedia.duration), durationSec: tempMedia.duration });
+            });
+            tempMedia.addEventListener('error', () => {
+                cleanup();
+                resolve({ duration: null, durationSec: 0 });
+            });
         });
+
+        const track = {
+            id: trackId,
+            name,
+            blobKey,
+            duration: durationInfo.duration,
+            durationSec: durationInfo.durationSec,
+            addedAt: Date.now(),
+            isVideo: isVideoTrack
+        };
+        pl.tracks.push(track);
     });
+
+    await Promise.all(promises);
+    musicSaveMeta();
     musicRenderPlaylist();
 }
 
-function musicRemoveTrack(index) {
-    const track = musicState.playlist[index];
-    if (track) {
-        URL.revokeObjectURL(track.objectUrl);
-    }
-    musicState.playlist.splice(index, 1);
+/* ---------- Remove track ---------- */
+async function musicRemoveTrack(trackId) {
+    const pl = musicGetCurrentPlaylist();
+    if (!pl) return;
 
-    if (index === musicState.currentIndex) {
+    const idx = pl.tracks.findIndex((t) => t.id === trackId);
+    if (idx < 0) return;
+
+    const track = pl.tracks[idx];
+    // 删除 IndexedDB 中的 Blob
+    await musicDeleteBlob(track.blobKey).catch(() => {});
+    // 释放 objectUrl（如果有）
+    if (track._objectUrl) URL.revokeObjectURL(track._objectUrl);
+
+    pl.tracks.splice(idx, 1);
+
+    if (trackId === musicState._playingTrackId) {
         audio.pause();
         musicState.isPlaying = false;
         musicState.currentIndex = -1;
+        musicState._playingTrackId = null;
         musicUpdateNowPlaying();
         musicUpdatePlayBtn();
-    } else if (index < musicState.currentIndex) {
-        musicState.currentIndex--;
     }
+
+    musicSaveMeta();
     musicRenderPlaylist();
 }
 
-function musicPlayIndex(index) {
-    if (index < 0 || index >= musicState.playlist.length) return;
+/* ---------- Play ---------- */
+async function musicPlayIndex(index, sortedTracks) {
+    const tracks = sortedTracks || musicGetSortedTracks();
+    if (index < 0 || index >= tracks.length) return;
+
     musicState.currentIndex = index;
-    const track = musicState.playlist[index];
-    audio.src = track.objectUrl;
-    audio.play().then(() => {
+    const track = tracks[index];
+    musicState._playingTrackId = track.id;
+
+    // 从 IndexedDB 加载 Blob
+    try {
+        const blob = await musicLoadBlob(track.blobKey);
+        if (!blob) {
+            musicUpdateNowPlaying();
+            return;
+        }
+        if (track._objectUrl) URL.revokeObjectURL(track._objectUrl);
+        track._objectUrl = URL.createObjectURL(blob);
+        audio.src = track._objectUrl;
+        await audio.play();
         musicState.isPlaying = true;
         musicUpdatePlayBtn();
         musicUpdateNowPlaying();
         musicRenderPlaylist();
-    }).catch(() => {});
+    } catch (e) {
+        // 播放失败
+    }
 }
 
 function musicTogglePlay() {
-    if (musicState.playlist.length === 0) return;
-    if (musicState.currentIndex < 0) {
+    const tracks = musicGetSortedTracks();
+    if (tracks.length === 0) return;
+    if (musicState.currentIndex < 0 || !musicState._playingTrackId) {
         musicPlayIndex(0);
         return;
     }
@@ -864,27 +1076,29 @@ function musicTogglePlay() {
 }
 
 function musicPrev() {
-    if (musicState.playlist.length === 0) return;
+    const tracks = musicGetSortedTracks();
+    if (tracks.length === 0) return;
     let idx = musicState.currentIndex - 1;
-    if (idx < 0) idx = musicState.playlist.length - 1;
-    musicPlayIndex(idx);
+    if (idx < 0) idx = tracks.length - 1;
+    musicPlayIndex(idx, tracks);
 }
 
 function musicNext() {
-    if (musicState.playlist.length === 0) return;
+    const tracks = musicGetSortedTracks();
+    if (tracks.length === 0) return;
     if (musicState.shuffle) {
         let idx;
-        do { idx = Math.floor(Math.random() * musicState.playlist.length); }
-        while (idx === musicState.currentIndex && musicState.playlist.length > 1);
-        musicPlayIndex(idx);
+        do { idx = Math.floor(Math.random() * tracks.length); }
+        while (idx === musicState.currentIndex && tracks.length > 1);
+        musicPlayIndex(idx, tracks);
         return;
     }
     let idx = musicState.currentIndex + 1;
-    if (idx >= musicState.playlist.length) {
+    if (idx >= tracks.length) {
         if (musicState.repeat === 'all') idx = 0;
         else { musicState.isPlaying = false; musicUpdatePlayBtn(); return; }
     }
-    musicPlayIndex(idx);
+    musicPlayIndex(idx, tracks);
 }
 
 function musicUpdatePlayBtn() {
@@ -893,14 +1107,18 @@ function musicUpdatePlayBtn() {
 }
 
 function musicUpdateNowPlaying() {
-    if (musicState.currentIndex >= 0 && musicState.currentIndex < musicState.playlist.length) {
-        const track = musicState.playlist[musicState.currentIndex];
-        $('#music-title').textContent = track.name;
-        $('#music-artist').textContent = `第 ${musicState.currentIndex + 1} 首 / 共 ${musicState.playlist.length} 首`;
-    } else {
-        $('#music-title').textContent = '还没选曲呢~';
-        $('#music-artist').textContent = '快加点音乐，骚货~';
+    const tracks = musicGetSortedTracks();
+    if (musicState._playingTrackId) {
+        const track = tracks.find((t) => t.id === musicState._playingTrackId);
+        if (track) {
+            const idx = tracks.indexOf(track);
+            $('#music-title').textContent = track.name;
+            $('#music-artist').textContent = `第 ${idx + 1} 首 / 共 ${tracks.length} 首`;
+            return;
+        }
     }
+    $('#music-title').textContent = '还没选曲呢~';
+    $('#music-artist').textContent = '快加点音乐，骚货~';
 }
 
 function musicToggleShuffle() {
@@ -914,17 +1132,84 @@ function musicToggleRepeat() {
     musicState.repeat = modes[idx];
     const btn = $('#btn-music-repeat');
     btn.classList.toggle('active', musicState.repeat !== 'none');
-    // 单曲循环时显示 "1"
     btn.title = musicState.repeat === 'one' ? 'Repeat One'
         : musicState.repeat === 'all' ? 'Repeat All' : 'Repeat';
 }
 
+/* ---------- Playlist CRUD ---------- */
+function musicCreatePlaylist(name) {
+    const pl = { id: musicGenId(), name: name || '新清单', tracks: [] };
+    musicState.playlists.push(pl);
+    musicState.currentPlaylistId = pl.id;
+    musicSaveMeta();
+    musicRenderPlaylistSelector();
+    musicRenderPlaylist();
+    musicUpdateNowPlaying();
+}
+
+function musicDeleteCurrentPlaylist() {
+    if (musicState.playlists.length <= 1) return; // 至少保留一个
+    const pl = musicGetCurrentPlaylist();
+    if (!pl) return;
+    // 删除所有 Blob
+    pl.tracks.forEach((t) => {
+        musicDeleteBlob(t.blobKey).catch(() => {});
+        if (t._objectUrl) URL.revokeObjectURL(t._objectUrl);
+    });
+    const idx = musicState.playlists.indexOf(pl);
+    musicState.playlists.splice(idx, 1);
+    musicState.currentPlaylistId = musicState.playlists[0].id;
+    audio.pause();
+    musicState.isPlaying = false;
+    musicState.currentIndex = -1;
+    musicState._playingTrackId = null;
+    musicUpdatePlayBtn();
+    musicSaveMeta();
+    musicRenderPlaylistSelector();
+    musicRenderPlaylist();
+    musicUpdateNowPlaying();
+}
+
+function musicRenameCurrentPlaylist() {
+    const pl = musicGetCurrentPlaylist();
+    if (!pl) return;
+    const newName = prompt('给清单起个名字~', pl.name);
+    if (newName && newName.trim()) {
+        pl.name = newName.trim();
+        musicSaveMeta();
+        musicRenderPlaylistSelector();
+    }
+}
+
+function musicSwitchPlaylist(playlistId) {
+    if (musicState.currentPlaylistId === playlistId) return;
+    musicState.currentPlaylistId = playlistId;
+    musicState.currentIndex = -1;
+    musicState._playingTrackId = null;
+    audio.pause();
+    musicState.isPlaying = false;
+    musicUpdatePlayBtn();
+    musicSaveMeta();
+    musicRenderPlaylist();
+    musicUpdateNowPlaying();
+}
+
+/* ---------- Init ---------- */
 function initMusicPlayer() {
+    // 加载持久化数据
+    const hasData = musicLoadMeta();
+    if (!hasData) {
+        // 创建默认播放清单
+        musicState.playlists = [{ id: musicGenId(), name: '默认清单', tracks: [] }];
+        musicState.currentPlaylistId = musicState.playlists[0].id;
+        musicSaveMeta();
+    }
+
     // 添加文件（主按钮 + 备用大区域按钮）
     const fileInputHandler = (e) => {
         if (e.target.files.length > 0) {
             musicAddFiles(e.target.files);
-            e.target.value = ''; // 允许重复选择
+            e.target.value = '';
         }
     };
     $('#music-file-input')?.addEventListener('change', fileInputHandler);
@@ -936,6 +1221,29 @@ function initMusicPlayer() {
     $('#btn-music-next')?.addEventListener('click', musicNext);
     $('#btn-music-shuffle')?.addEventListener('click', musicToggleShuffle);
     $('#btn-music-repeat')?.addEventListener('click', musicToggleRepeat);
+
+    // 排序按钮
+    $('#btn-sort-name')?.addEventListener('click', () => musicSetSort('name'));
+    $('#btn-sort-time')?.addEventListener('click', () => musicSetSort('addedAt'));
+
+    // 播放清单管理
+    $('#playlist-selector')?.addEventListener('change', (e) => {
+        musicSwitchPlaylist(e.target.value);
+    });
+    $('#btn-pl-new')?.addEventListener('click', () => {
+        const name = prompt('给新清单起个名字~', '');
+        if (name && name.trim()) musicCreatePlaylist(name.trim());
+    });
+    $('#btn-pl-rename')?.addEventListener('click', musicRenameCurrentPlaylist);
+    $('#btn-pl-delete')?.addEventListener('click', () => {
+        if (musicState.playlists.length <= 1) {
+            alert('至少要保留一个清单哦~');
+            return;
+        }
+        if (confirm('确定要删除这个清单吗？里面的歌都会没掉哦~')) {
+            musicDeleteCurrentPlaylist();
+        }
+    });
 
     // 进度条拖动
     const seekBar = $('#music-seek');
@@ -971,6 +1279,8 @@ function initMusicPlayer() {
     });
 
     // 初始渲染
+    musicRenderPlaylistSelector();
+    musicRenderSortState();
     musicRenderPlaylist();
 }
 
