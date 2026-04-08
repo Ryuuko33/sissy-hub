@@ -21,7 +21,7 @@
     --radius: 16px;
     --radius-sm: 10px;
     --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --tab-height: 44px;
+    --tab-height: 38px;
 }
 
 /* --- Reset & Base --- */
@@ -118,7 +118,7 @@ body::before {
     letter-spacing: 0.5px;
     text-transform: uppercase;
     cursor: pointer;
-    padding: 6px 14px 4px;
+    padding: 4px 14px;
     transition: var(--transition);
     -webkit-appearance: none;
 }
