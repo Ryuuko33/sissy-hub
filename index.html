@@ -760,6 +760,92 @@
         </div>
 
         <!-- ============================================================ -->
+        <!--  TAB: WEAR (Cage & Plug Tracker)                             -->
+        <!-- ============================================================ -->
+        <div id="tab-wear" class="tab-content">
+
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Wear Tracker</h1>
+                <p class="header__subtitle">♠ 乖乖戴着，主人随时检查 ♠</p>
+            </header>
+
+            <section class="screen active wear-screen">
+                <!-- Cage Tracker -->
+                <div class="wear-card" id="wear-cage-card">
+                    <div class="wear-card__header">
+                        <div class="wear-card__icon">🔒</div>
+                        <div class="wear-card__info">
+                            <div class="wear-card__name">Cage</div>
+                            <div class="wear-card__status" id="cage-status">未佩戴</div>
+                        </div>
+                        <button class="wear-toggle-btn" id="btn-cage-toggle">
+                            <span id="cage-toggle-text">开始佩戴</span>
+                        </button>
+                    </div>
+                    <div class="wear-card__timer" id="cage-timer-display">
+                        <div class="wear-card__timer-label">本次时长</div>
+                        <div class="wear-card__timer-value" id="cage-current-time">00:00:00</div>
+                    </div>
+                    <div class="wear-card__stats">
+                        <div class="wear-stat">
+                            <div class="wear-stat__value" id="cage-today">0h</div>
+                            <div class="wear-stat__label">今日</div>
+                        </div>
+                        <div class="wear-stat">
+                            <div class="wear-stat__value" id="cage-total">0h</div>
+                            <div class="wear-stat__label">总计</div>
+                        </div>
+                        <div class="wear-stat">
+                            <div class="wear-stat__value" id="cage-sessions">0</div>
+                            <div class="wear-stat__label">次数</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plug Tracker -->
+                <div class="wear-card" id="wear-plug-card">
+                    <div class="wear-card__header">
+                        <div class="wear-card__icon">♠</div>
+                        <div class="wear-card__info">
+                            <div class="wear-card__name">Plug</div>
+                            <div class="wear-card__status" id="plug-status">未佩戴</div>
+                        </div>
+                        <button class="wear-toggle-btn" id="btn-plug-toggle">
+                            <span id="plug-toggle-text">开始佩戴</span>
+                        </button>
+                    </div>
+                    <div class="wear-card__timer" id="plug-timer-display">
+                        <div class="wear-card__timer-label">本次时长</div>
+                        <div class="wear-card__timer-value" id="plug-current-time">00:00:00</div>
+                    </div>
+                    <div class="wear-card__stats">
+                        <div class="wear-stat">
+                            <div class="wear-stat__value" id="plug-today">0h</div>
+                            <div class="wear-stat__label">今日</div>
+                        </div>
+                        <div class="wear-stat">
+                            <div class="wear-stat__value" id="plug-total">0h</div>
+                            <div class="wear-stat__label">总计</div>
+                        </div>
+                        <div class="wear-stat">
+                            <div class="wear-stat__value" id="plug-sessions">0</div>
+                            <div class="wear-stat__label">次数</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 今日记录 -->
+                <div class="wear-history-card">
+                    <div class="wear-history__title">今日佩戴记录</div>
+                    <div class="wear-history__list" id="wear-today-log">
+                        <div class="wear-history__empty">今天还没有记录哦~快戴上吧，骚货♠</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
         <!--  BOTTOM TAB BAR                                              -->
         <!-- ============================================================ -->
         <nav class="tab-bar">
@@ -778,6 +864,10 @@
             <button class="tab-bar__item" data-tab="tab-music">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
                 <span>Music</span>
+            </button>
+            <button class="tab-bar__item" data-tab="tab-wear">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <span>Wear</span>
             </button>
         </nav>
 

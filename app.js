@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.3.2';
+const APP_VERSION = 'v1.4.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -1511,6 +1511,251 @@ function initCalendar() {
 }
 
 /* ============================================
+ * MODULE 5: WEAR TRACKER (Cage & Plug)
+ * ============================================ */
+const WEAR_STORAGE_KEY = 'sissy_wear_tracker';
+
+const wearState = {
+    cage: { isWearing: false, startTime: null, todayTotal: 0, allTimeTotal: 0, sessions: 0, todaySessions: [] },
+    plug: { isWearing: false, startTime: null, todayTotal: 0, allTimeTotal: 0, sessions: 0, todaySessions: [] },
+    _timerId: null,
+    _lastDate: ''  // 用于检测日期变更
+};
+
+function wearGetTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function wearFormatDuration(seconds) {
+    if (!seconds || seconds < 0) seconds = 0;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function wearFormatHours(seconds) {
+    if (!seconds || seconds < 0) return '0h';
+    const h = seconds / 3600;
+    if (h >= 1) return `${h.toFixed(1)}h`;
+    const m = Math.floor(seconds / 60);
+    return `${m}m`;
+}
+
+function wearLoadData() {
+    try {
+        const raw = localStorage.getItem(WEAR_STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        const todayKey = wearGetTodayKey();
+
+        ['cage', 'plug'].forEach((type) => {
+            const saved = data[type];
+            if (!saved) return;
+            wearState[type].allTimeTotal = saved.allTimeTotal || 0;
+            wearState[type].sessions = saved.sessions || 0;
+
+            // 恢复今日数据
+            if (saved.todayKey === todayKey) {
+                wearState[type].todayTotal = saved.todayTotal || 0;
+                wearState[type].todaySessions = saved.todaySessions || [];
+            } else {
+                wearState[type].todayTotal = 0;
+                wearState[type].todaySessions = [];
+            }
+
+            // 恢复进行中的佩戴
+            if (saved.isWearing && saved.startTime) {
+                wearState[type].isWearing = true;
+                wearState[type].startTime = saved.startTime;
+            }
+        });
+
+        wearState._lastDate = todayKey;
+    } catch (e) {}
+}
+
+function wearSaveData() {
+    const todayKey = wearGetTodayKey();
+    const data = {};
+    ['cage', 'plug'].forEach((type) => {
+        const s = wearState[type];
+        data[type] = {
+            isWearing: s.isWearing,
+            startTime: s.startTime,
+            allTimeTotal: s.allTimeTotal,
+            sessions: s.sessions,
+            todayKey: todayKey,
+            todayTotal: s.todayTotal,
+            todaySessions: s.todaySessions
+        };
+    });
+    try { localStorage.setItem(WEAR_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+
+function wearToggle(type) {
+    const state = wearState[type];
+    if (state.isWearing) {
+        // 结束佩戴
+        const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+        state.todayTotal += elapsed;
+        state.allTimeTotal += elapsed;
+        state.sessions++;
+
+        // 记录本次会话
+        state.todaySessions.push({
+            start: state.startTime,
+            end: Date.now(),
+            duration: elapsed
+        });
+
+        state.isWearing = false;
+        state.startTime = null;
+
+        if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+    } else {
+        // 开始佩戴
+        state.isWearing = true;
+        state.startTime = Date.now();
+        if (navigator.vibrate) navigator.vibrate(50);
+    }
+
+    wearSaveData();
+    wearUpdateUI();
+}
+
+function wearGetCurrentElapsed(type) {
+    const state = wearState[type];
+    if (!state.isWearing || !state.startTime) return 0;
+    return Math.floor((Date.now() - state.startTime) / 1000);
+}
+
+function wearUpdateUI() {
+    ['cage', 'plug'].forEach((type) => {
+        const state = wearState[type];
+        const isWearing = state.isWearing;
+        const elapsed = wearGetCurrentElapsed(type);
+
+        // 状态文字
+        const statusEl = $(`#${type}-status`);
+        if (statusEl) {
+            statusEl.textContent = isWearing ? '佩戴中~乖女孩♠' : '未佩戴';
+            statusEl.classList.toggle('wearing', isWearing);
+        }
+
+        // 按钮
+        const toggleBtn = $(`#btn-${type}-toggle`);
+        const toggleText = $(`#${type}-toggle-text`);
+        if (toggleBtn) toggleBtn.classList.toggle('stop', isWearing);
+        if (toggleText) toggleText.textContent = isWearing ? '结束佩戴' : '开始佩戴';
+
+        // 卡片高亮
+        const card = $(`#wear-${type}-card`);
+        if (card) card.classList.toggle('active', isWearing);
+
+        // 本次计时
+        const timerDisplay = $(`#${type}-timer-display`);
+        if (timerDisplay) timerDisplay.classList.toggle('hidden', !isWearing);
+        $(`#${type}-current-time`).textContent = wearFormatDuration(elapsed);
+
+        // 统计
+        const todayWithCurrent = state.todayTotal + (isWearing ? elapsed : 0);
+        const totalWithCurrent = state.allTimeTotal + (isWearing ? elapsed : 0);
+        $(`#${type}-today`).textContent = wearFormatHours(todayWithCurrent);
+        $(`#${type}-total`).textContent = wearFormatHours(totalWithCurrent);
+        $(`#${type}-sessions`).textContent = state.sessions + (isWearing ? 0 : 0);
+    });
+
+    // 今日记录
+    wearRenderTodayLog();
+}
+
+function wearRenderTodayLog() {
+    const container = $('#wear-today-log');
+    if (!container) return;
+
+    const allSessions = [];
+
+    ['cage', 'plug'].forEach((type) => {
+        const state = wearState[type];
+        state.todaySessions.forEach((s) => {
+            allSessions.push({
+                type: type,
+                icon: type === 'cage' ? '🔒' : '♠',
+                name: type === 'cage' ? 'Cage' : 'Plug',
+                start: s.start,
+                end: s.end,
+                duration: s.duration
+            });
+        });
+    });
+
+    // 按结束时间倒序
+    allSessions.sort((a, b) => b.end - a.end);
+
+    if (allSessions.length === 0) {
+        container.innerHTML = '<div class="wear-history__empty">今天还没有记录哦~快戴上吧，骚货♠</div>';
+        return;
+    }
+
+    container.innerHTML = allSessions.map((s) => {
+        const startTime = new Date(s.start);
+        const endTime = new Date(s.end);
+        const timeStr = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')} - ${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
+        return `
+        <div class="wear-history__item">
+            <div class="wear-history__item-icon">${s.icon}</div>
+            <div class="wear-history__item-info">
+                <div class="wear-history__item-type">${s.name}</div>
+                <div class="wear-history__item-time">${timeStr}</div>
+            </div>
+            <div class="wear-history__item-duration">${wearFormatDuration(s.duration)}</div>
+        </div>`;
+    }).join('');
+}
+
+function wearCheckDateChange() {
+    const todayKey = wearGetTodayKey();
+    if (wearState._lastDate && wearState._lastDate !== todayKey) {
+        // 日期变了，重置今日数据（但保留进行中的佩戴）
+        ['cage', 'plug'].forEach((type) => {
+            wearState[type].todayTotal = 0;
+            wearState[type].todaySessions = [];
+        });
+        wearState._lastDate = todayKey;
+        wearSaveData();
+    }
+}
+
+function wearStartTicker() {
+    if (wearState._timerId) return;
+    wearState._timerId = setInterval(() => {
+        wearCheckDateChange();
+        // 只在有佩戴进行中时更新 UI
+        if (wearState.cage.isWearing || wearState.plug.isWearing) {
+            wearUpdateUI();
+            // 每30秒自动保存一次（防止意外关闭丢失数据）
+            wearSaveData();
+        }
+    }, 1000);
+}
+
+function initWearTracker() {
+    wearLoadData();
+
+    // 绑定按钮
+    $('#btn-cage-toggle')?.addEventListener('click', () => wearToggle('cage'));
+    $('#btn-plug-toggle')?.addEventListener('click', () => wearToggle('plug'));
+
+    // 初始渲染
+    wearUpdateUI();
+
+    // 启动定时器
+    wearStartTicker();
+}
+
+/* ============================================
  * INIT
  * ============================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1528,4 +1773,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initCalendar();
     initCountdownTimer();
     initMusicPlayer();
+    initWearTracker();
 });

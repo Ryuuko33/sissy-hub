@@ -1005,6 +1005,153 @@ body::before {
 }
 
 /* ============================================
+   WEAR TRACKER (Tab 5)
+   ============================================ */
+.wear-screen {
+    gap: 14px;
+}
+
+/* Wear Card */
+.wear-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: var(--transition);
+}
+.wear-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+.wear-card__header {
+    display: flex; align-items: center; gap: 12px;
+}
+.wear-card__icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(217,70,239,0.12), rgba(168,85,247,0.12));
+    border: 1px solid rgba(217,70,239,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; flex-shrink: 0;
+}
+.wear-card__info { flex: 1; }
+.wear-card__name {
+    font-size: 1rem; font-weight: 700; color: var(--text-primary);
+}
+.wear-card__status {
+    font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;
+}
+.wear-card__status.wearing {
+    color: var(--accent-light);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+@keyframes statusPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Toggle Button */
+.wear-toggle-btn {
+    padding: 8px 16px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--accent-dim), var(--accent));
+    border: none; color: white;
+    font-size: 0.8rem; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+    transition: var(--transition);
+    -webkit-appearance: none; appearance: none;
+    flex-shrink: 0;
+}
+.wear-toggle-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 16px var(--accent-glow);
+}
+.wear-toggle-btn.stop {
+    background: linear-gradient(135deg, rgba(244,114,182,0.6), var(--danger));
+}
+
+/* Timer Display */
+.wear-card__timer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; margin-top: 12px;
+    border-top: 1px solid rgba(217,70,239,0.1);
+}
+.wear-card__timer.hidden { display: none; }
+.wear-card__timer-label {
+    font-size: 0.75rem; color: var(--text-muted);
+}
+.wear-card__timer-value {
+    font-size: 1.6rem; font-weight: 700;
+    color: var(--accent-light);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+}
+
+/* Stats Row */
+.wear-card__stats {
+    display: flex; gap: 8px; margin-top: 12px;
+}
+.wear-stat {
+    flex: 1; text-align: center;
+    background: rgba(217,70,239,0.05);
+    border: 1px solid rgba(217,70,239,0.1);
+    border-radius: var(--radius-sm);
+    padding: 10px 6px;
+}
+.wear-stat__value {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--accent-light);
+    font-variant-numeric: tabular-nums;
+}
+.wear-stat__label {
+    font-size: 0.65rem; color: var(--text-muted);
+    margin-top: 2px; letter-spacing: 1px;
+}
+
+/* History Card */
+.wear-history-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+.wear-history__title {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--text-primary); margin-bottom: 10px;
+}
+.wear-history__list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 200px; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.wear-history__empty {
+    text-align: center; padding: 16px 0;
+    font-size: 0.8rem; color: var(--text-muted);
+}
+.wear-history__item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: var(--radius-sm);
+    background: rgba(217,70,239,0.04);
+    border: 1px solid rgba(217,70,239,0.08);
+}
+.wear-history__item-icon {
+    font-size: 0.9rem; flex-shrink: 0;
+}
+.wear-history__item-info {
+    flex: 1; min-width: 0;
+}
+.wear-history__item-type {
+    font-size: 0.78rem; font-weight: 600; color: var(--text-primary);
+}
+.wear-history__item-time {
+    font-size: 0.68rem; color: var(--text-muted); margin-top: 1px;
+}
+.wear-history__item-duration {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--accent-light);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-height: 667px) {
