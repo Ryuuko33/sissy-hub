@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sissy-hub-v5';
+const CACHE_NAME = 'sissy-hub-v6';
 const ASSETS = [
     './',
     './index.html',

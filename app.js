@@ -3,6 +3,8 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
+const APP_VERSION = 'v1.2.0';
+
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
@@ -1206,6 +1208,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
+
+    // 显示版本号
+    const versionEl = $('#app-version');
+    if (versionEl) versionEl.textContent = APP_VERSION;
 
     initTabs();
     initFitness();
