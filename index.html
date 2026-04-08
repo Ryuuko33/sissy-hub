@@ -846,6 +846,74 @@
         </div>
 
         <!-- ============================================================ -->
+        <!--  TAB: STOCKINGS (丝袜日记)                                    -->
+        <!-- ============================================================ -->
+        <div id="tab-stockings" class="tab-content">
+
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Stockings Diary</h1>
+                <p class="header__subtitle">♠ 乖乖穿丝袜，做主人的丝袜娃娃 ♠</p>
+            </header>
+
+            <section class="screen active stk-screen">
+                <!-- 今日记录卡片 -->
+                <div class="stk-today-card" id="stk-today-card">
+                    <div class="stk-today__header">
+                        <div class="stk-today__icon">🩶</div>
+                        <div class="stk-today__info">
+                            <div class="stk-today__title">今日丝袜</div>
+                            <div class="stk-today__date" id="stk-today-date"></div>
+                        </div>
+                    </div>
+                    <!-- 未记录状态 -->
+                    <div class="stk-today__form" id="stk-form">
+                        <div class="stk-input-row">
+                            <div class="input-group">
+                                <label>品牌</label>
+                                <input type="text" id="stk-brand" placeholder="如：Wolford、Atsugi..." maxlength="30" list="stk-brand-list">
+                                <datalist id="stk-brand-list"></datalist>
+                            </div>
+                            <div class="input-group">
+                                <label>型号</label>
+                                <input type="text" id="stk-model" placeholder="如：Neon 40D、压力袜..." maxlength="40" list="stk-model-list">
+                                <datalist id="stk-model-list"></datalist>
+                            </div>
+                        </div>
+                        <button class="btn-primary stk-record-btn" id="btn-stk-record">记录今日穿着 ♠</button>
+                    </div>
+                    <!-- 已记录状态 -->
+                    <div class="stk-today__recorded hidden" id="stk-recorded">
+                        <div class="stk-today__recorded-info">
+                            <div class="stk-today__recorded-brand" id="stk-recorded-brand"></div>
+                            <div class="stk-today__recorded-model" id="stk-recorded-model"></div>
+                        </div>
+                        <div class="stk-today__recorded-badge">✓ 已记录</div>
+                    </div>
+                </div>
+
+                <!-- 穿着排行榜 -->
+                <div class="stk-ranking-card">
+                    <div class="stk-ranking__header">
+                        <div class="stk-ranking__title">👑 穿着排行榜</div>
+                        <div class="stk-ranking__subtitle">按穿着次数排名</div>
+                    </div>
+                    <div class="stk-ranking__list" id="stk-ranking-list">
+                        <div class="stk-ranking__empty">还没有记录呢~快穿上丝袜记录吧，骚货♠</div>
+                    </div>
+                </div>
+
+                <!-- 最近记录 -->
+                <div class="stk-history-card">
+                    <div class="stk-history__title">📅 最近穿着记录</div>
+                    <div class="stk-history__list" id="stk-history-list">
+                        <div class="stk-history__empty">还没有穿着记录~乖女孩快穿上丝袜吧♠</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
         <!--  BOTTOM TAB BAR                                              -->
         <!-- ============================================================ -->
         <nav class="tab-bar">
@@ -868,6 +936,10 @@
             <button class="tab-bar__item" data-tab="tab-wear">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                 <span>Wear</span>
+            </button>
+            <button class="tab-bar__item" data-tab="tab-stockings">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8 2 6 5 6 9c0 3 0 5-2 8h16c-2-3-2-5-2-8 0-4-2-7-6-7z"/><path d="M9 17v2a3 3 0 006 0v-2"/></svg>
+                <span>Silk</span>
             </button>
         </nav>
 

@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.4.0';
+const APP_VERSION = 'v1.5.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -1756,6 +1756,214 @@ function initWearTracker() {
 }
 
 /* ============================================
+ * MODULE 6: STOCKINGS DIARY (丝袜日记)
+ * ============================================ */
+const STK_STORAGE_KEY = 'sissy_stockings_diary';
+
+const stkState = {
+    records: [],  // [{ date: 'YYYY-MM-DD', brand: '', model: '' }]
+};
+
+function stkGetTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function stkFormatDate(dateStr) {
+    const parts = dateStr.split('-');
+    return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+}
+
+function stkLoadData() {
+    try {
+        const raw = localStorage.getItem(STK_STORAGE_KEY);
+        if (raw) {
+            const data = JSON.parse(raw);
+            stkState.records = data.records || [];
+        }
+    } catch (e) { stkState.records = []; }
+}
+
+function stkSaveData() {
+    try {
+        localStorage.setItem(STK_STORAGE_KEY, JSON.stringify({ records: stkState.records }));
+    } catch (e) {}
+}
+
+function stkGetTodayRecord() {
+    const todayKey = stkGetTodayKey();
+    return stkState.records.find((r) => r.date === todayKey) || null;
+}
+
+function stkRecord() {
+    const brand = ($('#stk-brand')?.value || '').trim();
+    const model = ($('#stk-model')?.value || '').trim();
+
+    if (!brand) {
+        alert('品牌不能为空哦~乖女孩要记清楚穿的什么♠');
+        return;
+    }
+    if (!model) {
+        alert('型号不能为空哦~主人要知道你穿的是哪一款♠');
+        return;
+    }
+
+    const todayKey = stkGetTodayKey();
+
+    // 检查今天是否已记录
+    if (stkGetTodayRecord()) {
+        alert('今天已经记录过了~乖女孩每天只能记录一次♠');
+        return;
+    }
+
+    stkState.records.push({ date: todayKey, brand, model });
+    stkSaveData();
+
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    // 清空输入
+    if ($('#stk-brand')) $('#stk-brand').value = '';
+    if ($('#stk-model')) $('#stk-model').value = '';
+
+    stkUpdateUI();
+}
+
+function stkGetRanking() {
+    // 按 brand + model 组合统计穿着次数
+    const countMap = {};
+    stkState.records.forEach((r) => {
+        const key = `${r.brand}|||${r.model}`;
+        if (!countMap[key]) {
+            countMap[key] = { brand: r.brand, model: r.model, count: 0 };
+        }
+        countMap[key].count++;
+    });
+
+    // 转为数组并按次数降序排列
+    return Object.values(countMap).sort((a, b) => b.count - a.count);
+}
+
+function stkGetBrandSuggestions() {
+    const brands = new Set();
+    stkState.records.forEach((r) => brands.add(r.brand));
+    return [...brands];
+}
+
+function stkGetModelSuggestions() {
+    const models = new Set();
+    stkState.records.forEach((r) => models.add(r.model));
+    return [...models];
+}
+
+function stkUpdateUI() {
+    const todayKey = stkGetTodayKey();
+    const todayDate = new Date();
+    const dateStr = `${todayDate.getFullYear()}年${todayDate.getMonth() + 1}月${todayDate.getDate()}日`;
+
+    // 今日日期
+    const dateEl = $('#stk-today-date');
+    if (dateEl) dateEl.textContent = dateStr;
+
+    // 检查今日是否已记录
+    const todayRec = stkGetTodayRecord();
+    const formEl = $('#stk-form');
+    const recordedEl = $('#stk-recorded');
+    const cardEl = $('#stk-today-card');
+
+    if (todayRec) {
+        // 已记录
+        if (formEl) formEl.classList.add('hidden');
+        if (recordedEl) recordedEl.classList.remove('hidden');
+        if (cardEl) cardEl.classList.add('recorded');
+        $('#stk-recorded-brand').textContent = todayRec.brand;
+        $('#stk-recorded-model').textContent = todayRec.model;
+    } else {
+        // 未记录
+        if (formEl) formEl.classList.remove('hidden');
+        if (recordedEl) recordedEl.classList.add('hidden');
+        if (cardEl) cardEl.classList.remove('recorded');
+    }
+
+    // 更新品牌/型号建议列表
+    const brandList = $('#stk-brand-list');
+    if (brandList) {
+        brandList.innerHTML = stkGetBrandSuggestions()
+            .map((b) => `<option value="${b}">`).join('');
+    }
+    const modelList = $('#stk-model-list');
+    if (modelList) {
+        modelList.innerHTML = stkGetModelSuggestions()
+            .map((m) => `<option value="${m}">`).join('');
+    }
+
+    // 渲染排行榜
+    stkRenderRanking();
+
+    // 渲染最近记录
+    stkRenderHistory();
+}
+
+function stkRenderRanking() {
+    const container = $('#stk-ranking-list');
+    if (!container) return;
+
+    const ranking = stkGetRanking();
+
+    if (ranking.length === 0) {
+        container.innerHTML = '<div class="stk-ranking__empty">还没有记录呢~快穿上丝袜记录吧，骚货♠</div>';
+        return;
+    }
+
+    container.innerHTML = ranking.map((item, i) => {
+        const medalIcons = ['👑', '🥈', '🥉'];
+        const rankDisplay = i < 3 ? medalIcons[i] : (i + 1);
+        return `
+        <div class="stk-ranking__item">
+            <div class="stk-ranking__rank">${rankDisplay}</div>
+            <div class="stk-ranking__item-info">
+                <div class="stk-ranking__item-brand">${item.brand}</div>
+                <div class="stk-ranking__item-model">${item.model}</div>
+            </div>
+            <div class="stk-ranking__item-count">${item.count}<span class="stk-ranking__item-unit">次</span></div>
+        </div>`;
+    }).join('');
+}
+
+function stkRenderHistory() {
+    const container = $('#stk-history-list');
+    if (!container) return;
+
+    // 最近20条记录，按日期倒序
+    const recent = [...stkState.records].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20);
+
+    if (recent.length === 0) {
+        container.innerHTML = '<div class="stk-history__empty">还没有穿着记录~乖女孩快穿上丝袜吧♠</div>';
+        return;
+    }
+
+    container.innerHTML = recent.map((r) => {
+        return `
+        <div class="stk-history__item">
+            <div class="stk-history__item-date">${stkFormatDate(r.date)}</div>
+            <div class="stk-history__item-info">
+                <div class="stk-history__item-brand">${r.brand}</div>
+                <div class="stk-history__item-model">${r.model}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function initStockingsDiary() {
+    stkLoadData();
+
+    // 绑定记录按钮
+    $('#btn-stk-record')?.addEventListener('click', stkRecord);
+
+    // 初始渲染
+    stkUpdateUI();
+}
+
+/* ============================================
  * INIT
  * ============================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1774,4 +1982,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initCountdownTimer();
     initMusicPlayer();
     initWearTracker();
+    initStockingsDiary();
 });
