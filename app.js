@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.5.1';
+const APP_VERSION = 'v1.5.2';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -937,6 +937,12 @@ function musicSetSort(mode) {
     } else {
         musicState.sortMode = mode;
         musicState.sortAsc = true;
+    }
+    // 排序变更后，根据当前播放歌曲 ID 重新定位索引
+    if (musicState._playingTrackId) {
+        const sorted = musicGetSortedTracks();
+        const newIdx = sorted.findIndex((t) => t.id === musicState._playingTrackId);
+        if (newIdx >= 0) musicState.currentIndex = newIdx;
     }
     musicSaveMeta();
     musicRenderSortState();
