@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.5.2';
+const APP_VERSION = 'v1.6.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -99,16 +99,58 @@ function playPhaseEnd() {
  * TAB NAVIGATION
  * ============================================ */
 function initTabs() {
+    const moreOverlay = document.getElementById('more-menu-overlay');
+    const btnMore = document.getElementById('btn-more-menu');
+
+    // 底部 tab-bar 按钮点击（不含 More 按钮）
     $$('.tab-bar__item').forEach((btn) => {
+        if (btn.id === 'btn-more-menu') return;
         btn.addEventListener('click', () => {
             const tabId = btn.dataset.tab;
             // 切换 tab 按钮高亮
             $$('.tab-bar__item').forEach((b) => b.classList.remove('active'));
             btn.classList.add('active');
+            // 清除 more-menu 中的高亮
+            $$('.more-menu__item').forEach((b) => b.classList.remove('active'));
             // 切换 tab 内容
             $$('.tab-content').forEach((t) => t.classList.remove('active'));
             const target = $(`#${tabId}`);
             if (target) target.classList.add('active');
+        });
+    });
+
+    // More 按钮 → 打开/关闭弹出菜单
+    if (btnMore) {
+        btnMore.addEventListener('click', () => {
+            moreOverlay.classList.toggle('active');
+        });
+    }
+
+    // 点击遮罩关闭
+    if (moreOverlay) {
+        moreOverlay.addEventListener('click', (e) => {
+            if (e.target === moreOverlay) {
+                moreOverlay.classList.remove('active');
+            }
+        });
+    }
+
+    // More 菜单内的按钮点击
+    $$('.more-menu__item').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            // 清除底部 tab-bar 高亮，给 More 按钮加高亮
+            $$('.tab-bar__item').forEach((b) => b.classList.remove('active'));
+            if (btnMore) btnMore.classList.add('active');
+            // 清除 more-menu 中其他高亮，给当前加高亮
+            $$('.more-menu__item').forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+            // 切换 tab 内容
+            $$('.tab-content').forEach((t) => t.classList.remove('active'));
+            const target = $(`#${tabId}`);
+            if (target) target.classList.add('active');
+            // 关闭菜单
+            moreOverlay.classList.remove('active');
         });
     });
 }
