@@ -3,10 +3,98 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.7.0';
+const APP_VERSION = 'v1.8.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
+
+/* ============================================
+ * 通用 IndexedDB 持久化存储层
+ * iOS PWA 在 Service Worker 更新时可能清除 localStorage，
+ * 因此将所有用户数据存储到 IndexedDB 中，确保数据安全。
+ * ============================================ */
+const APP_DB_NAME = 'sissy_hub_data';
+const APP_DB_VERSION = 1;
+const APP_STORE_NAME = 'kv_store';
+
+function appOpenDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(APP_DB_NAME, APP_DB_VERSION);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(APP_STORE_NAME)) {
+                db.createObjectStore(APP_STORE_NAME);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+/**
+ * 从 IndexedDB 读取数据（异步）
+ * @param {string} key 存储键名
+ * @returns {Promise<any>} 解析后的数据，不存在则返回 null
+ */
+async function appDBGet(key) {
+    try {
+        const db = await appOpenDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction(APP_STORE_NAME, 'readonly');
+            const req = tx.objectStore(APP_STORE_NAME).get(key);
+            req.onsuccess = () => { db.close(); resolve(req.result !== undefined ? req.result : null); };
+            req.onerror = () => { db.close(); resolve(null); };
+        });
+    } catch (e) { return null; }
+}
+
+/**
+ * 向 IndexedDB 写入数据（异步）
+ * @param {string} key 存储键名
+ * @param {any} value 要存储的数据（会直接存储，无需 JSON.stringify）
+ */
+async function appDBSet(key, value) {
+    try {
+        const db = await appOpenDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction(APP_STORE_NAME, 'readwrite');
+            tx.objectStore(APP_STORE_NAME).put(value, key);
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); resolve(); };
+        });
+    } catch (e) {}
+}
+
+/**
+ * 从 localStorage 迁移数据到 IndexedDB（仅在首次运行时执行）
+ * 迁移完成后在 IndexedDB 中标记，避免重复迁移。
+ */
+async function migrateLocalStorageToIDB() {
+    const migrated = await appDBGet('__ls_migrated__');
+    if (migrated) return;
+
+    const keys = [
+        'sissy_training_calendar',
+        'sissy_wear_tracker',
+        'sissy_stockings_diary',
+        'sissy_brand_list',
+        'sissy_wishlist',
+        'sissy_closet',
+        'sissy_music_meta'
+    ];
+
+    for (const key of keys) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                const data = JSON.parse(raw);
+                await appDBSet(key, data);
+            }
+        } catch (e) {}
+    }
+
+    await appDBSet('__ls_migrated__', true);
+}
 
 /* ============================================
  * 音效系统 — 使用真实音频文件（PointyAux NSFW SFX Pack）
@@ -845,10 +933,21 @@ function musicSaveMeta() {
         sortAsc: musicState.sortAsc
     };
     try { localStorage.setItem(MUSIC_META_KEY, JSON.stringify(meta)); } catch (e) {}
+    appDBSet(MUSIC_META_KEY, meta);
 }
 
-function musicLoadMeta() {
+async function musicLoadMeta() {
     try {
+        // 优先从 IndexedDB 读取
+        const idbMeta = await appDBGet(MUSIC_META_KEY);
+        if (idbMeta && idbMeta.playlists && idbMeta.playlists.length > 0) {
+            musicState.playlists = idbMeta.playlists;
+            musicState.currentPlaylistId = idbMeta.currentPlaylistId || idbMeta.playlists[0].id;
+            musicState.sortMode = idbMeta.sortMode || 'addedAt';
+            musicState.sortAsc = idbMeta.sortAsc !== undefined ? idbMeta.sortAsc : true;
+            return true;
+        }
+        // 兼容：从 localStorage 读取
         const raw = localStorage.getItem(MUSIC_META_KEY);
         if (!raw) return false;
         const meta = JSON.parse(raw);
@@ -1244,8 +1343,8 @@ function musicSwitchPlaylist(playlistId) {
 
 /* ---------- Init ---------- */
 function initMusicPlayer() {
-    // 加载持久化数据
-    const hasData = musicLoadMeta();
+    // 加载持久化数据（异步）
+    return musicLoadMeta().then((hasData) => {
     if (!hasData) {
         // 创建默认播放清单
         musicState.playlists = [{ id: musicGenId(), name: '默认清单', tracks: [] }];
@@ -1330,6 +1429,7 @@ function initMusicPlayer() {
     musicRenderPlaylistSelector();
     musicRenderSortState();
     musicRenderPlaylist();
+    });
 }
 
 /* ============================================
@@ -1355,17 +1455,20 @@ function calGetDateKey(y, m, d) {
     return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-function calLoadData() {
+async function calLoadData() {
     try {
+        // 优先从 IndexedDB 读取
+        const idbData = await appDBGet(CAL_STORAGE_KEY);
+        if (idbData) { calState.data = idbData; return; }
+        // 兼容：从 localStorage 读取
         const raw = localStorage.getItem(CAL_STORAGE_KEY);
         if (raw) calState.data = JSON.parse(raw);
     } catch (e) { calState.data = {}; }
 }
 
 function calSaveData() {
-    try {
-        localStorage.setItem(CAL_STORAGE_KEY, JSON.stringify(calState.data));
-    } catch (e) {}
+    try { localStorage.setItem(CAL_STORAGE_KEY, JSON.stringify(calState.data)); } catch (e) {}
+    appDBSet(CAL_STORAGE_KEY, calState.data);
 }
 
 function calRenderMonth() {
@@ -1527,8 +1630,7 @@ function calUpdateStats() {
 }
 
 function initCalendar() {
-    calLoadData();
-
+    return calLoadData().then(() => {
     const today = new Date();
     calState.year = today.getFullYear();
     calState.month = today.getMonth();
@@ -1556,6 +1658,7 @@ function initCalendar() {
 
     calRenderMonth();
     calRenderDayPanel();
+    });
 }
 
 /* ============================================
@@ -1591,11 +1694,16 @@ function wearFormatHours(seconds) {
     return `${m}m`;
 }
 
-function wearLoadData() {
+async function wearLoadData() {
     try {
-        const raw = localStorage.getItem(WEAR_STORAGE_KEY);
-        if (!raw) return;
-        const data = JSON.parse(raw);
+        // 优先从 IndexedDB 读取
+        let data = await appDBGet(WEAR_STORAGE_KEY);
+        if (!data) {
+            // 兼容：从 localStorage 读取
+            const raw = localStorage.getItem(WEAR_STORAGE_KEY);
+            if (!raw) return;
+            data = JSON.parse(raw);
+        }
         const todayKey = wearGetTodayKey();
 
         ['cage', 'plug'].forEach((type) => {
@@ -1640,6 +1748,7 @@ function wearSaveData() {
         };
     });
     try { localStorage.setItem(WEAR_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    appDBSet(WEAR_STORAGE_KEY, data);
 }
 
 function wearToggle(type) {
@@ -1790,8 +1899,7 @@ function wearStartTicker() {
 }
 
 function initWearTracker() {
-    wearLoadData();
-
+    return wearLoadData().then(() => {
     // 绑定按钮
     $('#btn-cage-toggle')?.addEventListener('click', () => wearToggle('cage'));
     $('#btn-plug-toggle')?.addEventListener('click', () => wearToggle('plug'));
@@ -1801,6 +1909,7 @@ function initWearTracker() {
 
     // 启动定时器
     wearStartTicker();
+    });
 }
 
 /* ============================================
@@ -1822,8 +1931,12 @@ function stkFormatDate(dateStr) {
     return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
 }
 
-function stkLoadData() {
+async function stkLoadData() {
     try {
+        // 优先从 IndexedDB 读取
+        const idbData = await appDBGet(STK_STORAGE_KEY);
+        if (idbData) { stkState.records = idbData.records || []; return; }
+        // 兼容：从 localStorage 读取
         const raw = localStorage.getItem(STK_STORAGE_KEY);
         if (raw) {
             const data = JSON.parse(raw);
@@ -1833,9 +1946,9 @@ function stkLoadData() {
 }
 
 function stkSaveData() {
-    try {
-        localStorage.setItem(STK_STORAGE_KEY, JSON.stringify({ records: stkState.records }));
-    } catch (e) {}
+    const payload = { records: stkState.records };
+    try { localStorage.setItem(STK_STORAGE_KEY, JSON.stringify(payload)); } catch (e) {}
+    appDBSet(STK_STORAGE_KEY, payload);
 }
 
 function stkGetTodayRecord() {
@@ -2002,13 +2115,13 @@ function stkRenderHistory() {
 }
 
 function initStockingsDiary() {
-    stkLoadData();
-
+    return stkLoadData().then(() => {
     // 绑定记录按钮
     $('#btn-stk-record')?.addEventListener('click', stkRecord);
 
     // 初始渲染
     stkUpdateUI();
+    });
 }
 
 /* ============================================
@@ -2020,8 +2133,12 @@ const brandState = {
     brands: []  // ['Wolford', 'Atsugi', ...]
 };
 
-function brandLoad() {
+async function brandLoad() {
     try {
+        // 优先从 IndexedDB 读取
+        const idbData = await appDBGet(BRAND_STORAGE_KEY);
+        if (idbData) { brandState.brands = idbData || []; return; }
+        // 兼容：从 localStorage 读取
         const raw = localStorage.getItem(BRAND_STORAGE_KEY);
         if (raw) {
             brandState.brands = JSON.parse(raw) || [];
@@ -2030,9 +2147,8 @@ function brandLoad() {
 }
 
 function brandSave() {
-    try {
-        localStorage.setItem(BRAND_STORAGE_KEY, JSON.stringify(brandState.brands));
-    } catch (e) {}
+    try { localStorage.setItem(BRAND_STORAGE_KEY, JSON.stringify(brandState.brands)); } catch (e) {}
+    appDBSet(BRAND_STORAGE_KEY, brandState.brands);
 }
 
 function brandAdd() {
@@ -2103,7 +2219,7 @@ function brandUpdateAllDataLists() {
 }
 
 function initBrandManager() {
-    brandLoad();
+    return brandLoad().then(() => {
     brandRenderList();
 
     // 绑定添加按钮
@@ -2112,6 +2228,7 @@ function initBrandManager() {
     // 回车添加
     $('#brand-input')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') brandAdd();
+    });
     });
 }
 
@@ -2124,8 +2241,12 @@ const wishState = {
     items: []  // [{ id, brand, model, price, purchased }]
 };
 
-function wishLoad() {
+async function wishLoad() {
     try {
+        // 优先从 IndexedDB 读取
+        const idbData = await appDBGet(WISH_STORAGE_KEY);
+        if (idbData) { wishState.items = idbData.items || []; return; }
+        // 兼容：从 localStorage 读取
         const raw = localStorage.getItem(WISH_STORAGE_KEY);
         if (raw) {
             const data = JSON.parse(raw);
@@ -2135,9 +2256,9 @@ function wishLoad() {
 }
 
 function wishSave() {
-    try {
-        localStorage.setItem(WISH_STORAGE_KEY, JSON.stringify({ items: wishState.items }));
-    } catch (e) {}
+    const payload = { items: wishState.items };
+    try { localStorage.setItem(WISH_STORAGE_KEY, JSON.stringify(payload)); } catch (e) {}
+    appDBSet(WISH_STORAGE_KEY, payload);
 }
 
 function wishGenId() {
@@ -2224,8 +2345,7 @@ function wishRenderList() {
 }
 
 function initWishlist() {
-    wishLoad();
-
+    return wishLoad().then(() => {
     // 绑定添加按钮
     $('#btn-wish-add')?.addEventListener('click', wishAdd);
 
@@ -2234,6 +2354,7 @@ function initWishlist() {
 
     // 更新品牌 datalist
     brandUpdateAllDataLists();
+    });
 }
 
 /* ============================================
@@ -2246,8 +2367,12 @@ const closetState = {
     filter: 'all'
 };
 
-function closetLoad() {
+async function closetLoad() {
     try {
+        // 优先从 IndexedDB 读取
+        const idbData = await appDBGet(CLOSET_STORAGE_KEY);
+        if (idbData) { closetState.items = idbData.items || []; return; }
+        // 兼容：从 localStorage 读取
         const raw = localStorage.getItem(CLOSET_STORAGE_KEY);
         if (raw) {
             const data = JSON.parse(raw);
@@ -2257,9 +2382,9 @@ function closetLoad() {
 }
 
 function closetSave() {
-    try {
-        localStorage.setItem(CLOSET_STORAGE_KEY, JSON.stringify({ items: closetState.items }));
-    } catch (e) {}
+    const payload = { items: closetState.items };
+    try { localStorage.setItem(CLOSET_STORAGE_KEY, JSON.stringify(payload)); } catch (e) {}
+    appDBSet(CLOSET_STORAGE_KEY, payload);
 }
 
 function closetGenId() {
@@ -2345,8 +2470,7 @@ function closetRenderList() {
 }
 
 function initCloset() {
-    closetLoad();
-
+    return closetLoad().then(() => {
     // 绑定添加按钮
     $('#btn-closet-add')?.addEventListener('click', closetAdd);
 
@@ -2362,12 +2486,13 @@ function initCloset() {
 
     // 更新品牌 datalist
     brandUpdateAllDataLists();
+    });
 }
 
 /* ============================================
  * INIT
  * ============================================ */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // 注册 Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -2377,16 +2502,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const versionEl = $('#app-version');
     if (versionEl) versionEl.textContent = APP_VERSION;
 
+    // 先执行 localStorage → IndexedDB 数据迁移（仅首次）
+    await migrateLocalStorageToIDB();
+
+    // 同步初始化（不涉及异步数据加载）
     initTabs();
     initFitness();
-    initCalendar();
     initCountdownTimer();
-    initMusicPlayer();
-    initWearTracker();
-    initBrandManager();
-    initStockingsDiary();
-    initWishlist();
-    initCloset();
+
+    // 异步初始化（需要从 IndexedDB 加载数据）
+    // 品牌管理需要先加载，其他模块依赖品牌列表
+    await initBrandManager();
+    await Promise.all([
+        initCalendar(),
+        initMusicPlayer(),
+        initWearTracker(),
+        initStockingsDiary(),
+        initWishlist(),
+        initCloset()
+    ]);
 
     // 初始化完成后统一更新品牌 datalist
     brandUpdateAllDataLists();

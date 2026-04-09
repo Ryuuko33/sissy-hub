@@ -43,7 +43,22 @@ body {
 html {
     background: var(--bg-dark);
     min-height: 100%;
-    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+}
+
+/* PWA standalone 模式额外覆盖 —— 用伪元素铺满屏幕底部 */
+@media all and (display-mode: standalone) {
+    body::after {
+        content: '';
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: env(safe-area-inset-bottom, 34px);
+        background: rgba(13, 5, 16, 0.98);
+        z-index: 49;
+        pointer-events: none;
+    }
 }
 
 /* --- Background Gradient --- */
@@ -114,11 +129,11 @@ body::before {
 .tab-bar::after {
     content: '';
     position: absolute;
-    bottom: -50px;
+    bottom: -100px;
     left: 0;
     right: 0;
-    height: 50px;
-    background: #0d0510;
+    height: 100px;
+    background: rgba(13, 5, 16, 0.98);
 }
 
 .tab-bar__item {
@@ -188,10 +203,10 @@ body::before {
 .more-menu::after {
     content: '';
     position: absolute;
-    bottom: -50px;
+    bottom: -100px;
     left: 0;
     right: 0;
-    height: 50px;
+    height: 100px;
     background: rgba(26, 10, 32, 0.98);
     border-radius: 0;
 }
@@ -244,12 +259,12 @@ body::before {
 /* --- App Version Badge --- */
 .app-version {
     position: fixed;
-    bottom: calc(36px + env(safe-area-inset-bottom, 0px) + 4px);
+    top: 8px;
     right: 12px;
     font-size: 0.55rem;
     color: var(--text-muted);
     opacity: 0.4;
-    z-index: 51;
+    z-index: 100;
     pointer-events: none;
     letter-spacing: 0.5px;
 }
