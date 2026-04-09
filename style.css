@@ -260,13 +260,13 @@ body::before {
 
 /* --- App Version Badge --- */
 .app-version {
-    position: fixed;
-    bottom: 4px;
-    right: 4px;
+    position: absolute;
+    bottom: 2px;
+    right: 6px;
     font-size: 0.5rem;
     color: var(--text-muted);
     opacity: 0.3;
-    z-index: 100;
+    z-index: 1;
     pointer-events: none;
     letter-spacing: 0.5px;
 }
