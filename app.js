@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.5.0';
+const APP_VERSION = 'v2.6.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -76,6 +76,7 @@ async function migrateLocalStorageToIDB() {
         'sissy_training_calendar',
         'sissy_wear_tracker',
         'sissy_stockings_diary',
+        'sissy_leotard_diary',
         'sissy_brand_list',
         'sissy_wishlist',
         'sissy_closet',
@@ -118,6 +119,7 @@ const DATA_EXPORT_KEYS = [
     'sissy_training_calendar',
     'sissy_wear_tracker',
     'sissy_stockings_diary',
+    'sissy_leotard_diary',
     'sissy_brand_list',
     'sissy_wishlist',
     'sissy_closet',
@@ -2406,15 +2408,18 @@ function stkRenderHistory() {
 
 /**
  * 更新丝袜日记中的收藏柜下拉选单
- * 从 closetState.items 中按 brand+model 分组，生成选项
+ * 从 closetState.items 中筛选 pantyhose 类别，按 brand+model 分组
  */
 function stkUpdateClosetSelect() {
     const select = $('#stk-closet-select');
     if (!select) return;
 
+    // 只取 pantyhose 类别
+    const phItems = closetState.items.filter((i) => i.category === 'pantyhose');
+
     // 按 brand+model 分组（去重）
     const groupMap = {};
-    closetState.items.forEach((item) => {
+    phItems.forEach((item) => {
         const key = `${item.brand}|||${item.model}`;
         if (!groupMap[key]) {
             groupMap[key] = {
@@ -2469,7 +2474,7 @@ function stkOnClosetSelectChange() {
     if (!selectedItem) return;
 
     const sameGroup = closetState.items.filter(
-        (i) => i.brand === selectedItem.brand && i.model === selectedItem.model
+        (i) => i.brand === selectedItem.brand && i.model === selectedItem.model && i.category === 'pantyhose'
     );
 
     // 收集所有颜色
@@ -2505,6 +2510,204 @@ function initStockingsDiary() {
 
     // 初始渲染
     stkUpdateUI();
+    });
+}
+
+/* ============================================
+ * MODULE 6B: LEOTARD DIARY (连体衣日记)
+ * ============================================ */
+const LEO_STORAGE_KEY = 'sissy_leotard_diary';
+
+const leoState = {
+    records: [],  // [{ date: 'YYYY-MM-DD', brand: '', model: '', type: '', color: '' }]
+};
+
+async function leoLoadData() {
+    try {
+        const idbData = await appDBGet(LEO_STORAGE_KEY);
+        if (idbData) { leoState.records = idbData.records || []; return; }
+        const raw = localStorage.getItem(LEO_STORAGE_KEY);
+        if (raw) {
+            const data = JSON.parse(raw);
+            leoState.records = data.records || [];
+        }
+    } catch (e) { leoState.records = []; }
+}
+
+function leoSaveData() {
+    const payload = { records: leoState.records };
+    try { localStorage.setItem(LEO_STORAGE_KEY, JSON.stringify(payload)); } catch (e) {}
+    appDBSet(LEO_STORAGE_KEY, payload);
+}
+
+function leoGetTodayRecord() {
+    const todayKey = stkGetTodayKey();
+    return leoState.records.find((r) => r.date === todayKey);
+}
+
+function leoRecord() {
+    const closetSelect = $('#leo-closet-select');
+    const colorSelect = $('#leo-color-select');
+    const closetId = closetSelect ? closetSelect.value : '';
+    const selectedColor = colorSelect ? colorSelect.value : '';
+
+    if (!closetId) {
+        alert('请先从收藏柜选择一件连体衣哦~乖女孩要记清楚穿的什么♠');
+        return;
+    }
+    if (!selectedColor) {
+        alert('请选择颜色哦~主人要知道你穿的是哪一件♠');
+        return;
+    }
+
+    const todayKey = stkGetTodayKey();
+    if (leoGetTodayRecord()) {
+        alert('今天已经记录过了~乖女孩每天只能记录一次♠');
+        return;
+    }
+
+    const closetItem = closetState.items.find((i) => i.id === closetId);
+    if (!closetItem) {
+        alert('选择的连体衣不存在，请重新选择~');
+        return;
+    }
+
+    leoState.records.push({
+        date: todayKey,
+        brand: closetItem.brand,
+        model: closetItem.model,
+        type: closetItem.type || '',
+        color: selectedColor
+    });
+    leoSaveData();
+
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    if (closetSelect) closetSelect.value = '';
+    if (colorSelect) colorSelect.innerHTML = '<option value="">请先选择连体衣...</option>';
+    const previewEl = $('#leo-selected-preview');
+    if (previewEl) previewEl.classList.add('hidden');
+
+    leoUpdateUI();
+}
+
+function leoUpdateUI() {
+    const todayDate = new Date();
+    const dateStr = `${todayDate.getFullYear()}年${todayDate.getMonth() + 1}月${todayDate.getDate()}日`;
+
+    const dateEl = $('#leo-today-date');
+    if (dateEl) dateEl.textContent = dateStr;
+
+    const todayRec = leoGetTodayRecord();
+    const formEl = $('#leo-form');
+    const recordedEl = $('#leo-recorded');
+    const cardEl = $('#leo-today-card');
+
+    if (todayRec) {
+        if (formEl) formEl.classList.add('hidden');
+        if (recordedEl) recordedEl.classList.remove('hidden');
+        if (cardEl) cardEl.classList.add('recorded');
+        $('#leo-recorded-brand').textContent = todayRec.brand;
+        $('#leo-recorded-model').textContent = todayRec.model;
+        const extraParts = [];
+        if (todayRec.type) extraParts.push(todayRec.type);
+        if (todayRec.color) extraParts.push(todayRec.color);
+        const extraEl = $('#leo-recorded-extra');
+        if (extraEl) extraEl.textContent = extraParts.length ? extraParts.join(' · ') : '';
+    } else {
+        if (formEl) formEl.classList.remove('hidden');
+        if (recordedEl) recordedEl.classList.add('hidden');
+        if (cardEl) cardEl.classList.remove('recorded');
+    }
+
+    leoUpdateClosetSelect();
+}
+
+/**
+ * 更新连体衣日记中的收藏柜下拉选单
+ * 从 closetState.items 中筛选 leotard 类别
+ */
+function leoUpdateClosetSelect() {
+    const select = $('#leo-closet-select');
+    if (!select) return;
+
+    const leoItems = closetState.items.filter((i) => i.category === 'leotard');
+
+    const groupMap = {};
+    leoItems.forEach((item) => {
+        const key = `${item.brand}|||${item.model}`;
+        if (!groupMap[key]) {
+            groupMap[key] = {
+                brand: item.brand,
+                model: item.model,
+                type: item.type || '',
+                items: []
+            };
+        }
+        groupMap[key].items.push(item);
+    });
+
+    const groups = Object.values(groupMap);
+
+    if (groups.length === 0) {
+        select.innerHTML = '<option value="">连体衣柜是空的~先去添加连体衣吧♠</option>';
+        return;
+    }
+
+    select.innerHTML = '<option value="">请选择连体衣...</option>' +
+        groups.map((g) => {
+            const firstId = g.items[0].id;
+            const typeStr = g.type ? ` · ${g.type}` : '';
+            const colorCount = new Set(g.items.filter(i => i.color).map(i => i.color)).size;
+            const colorHint = colorCount > 0 ? ` (${colorCount}色)` : '';
+            return `<option value="${firstId}">${g.brand} — ${g.model}${typeStr}${colorHint}</option>`;
+        }).join('');
+}
+
+function leoOnClosetSelectChange() {
+    const closetSelect = $('#leo-closet-select');
+    const colorSelect = $('#leo-color-select');
+    const previewEl = $('#leo-selected-preview');
+    const previewInfo = $('#leo-preview-info');
+    if (!closetSelect || !colorSelect) return;
+
+    const selectedId = closetSelect.value;
+    if (!selectedId) {
+        colorSelect.innerHTML = '<option value="">请先选择连体衣...</option>';
+        if (previewEl) previewEl.classList.add('hidden');
+        return;
+    }
+
+    const selectedItem = closetState.items.find((i) => i.id === selectedId);
+    if (!selectedItem) return;
+
+    const sameGroup = closetState.items.filter(
+        (i) => i.brand === selectedItem.brand && i.model === selectedItem.model && i.category === 'leotard'
+    );
+
+    const colors = new Set();
+    sameGroup.forEach((i) => { if (i.color) colors.add(i.color); });
+
+    if (colors.size === 0) {
+        colorSelect.innerHTML = '<option value="">无颜色信息</option><option value="未指定">未指定</option>';
+    } else {
+        colorSelect.innerHTML = '<option value="">请选择颜色...</option>' +
+            [...colors].map((c) => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    if (previewEl && previewInfo) {
+        const parts = [selectedItem.brand, selectedItem.model];
+        if (selectedItem.type) parts.push(selectedItem.type);
+        previewInfo.textContent = parts.join(' · ');
+        previewEl.classList.remove('hidden');
+    }
+}
+
+function initLeotardDiary() {
+    return leoLoadData().then(() => {
+        $('#btn-leo-record')?.addEventListener('click', leoRecord);
+        $('#leo-closet-select')?.addEventListener('change', leoOnClosetSelectChange);
+        leoUpdateUI();
     });
 }
 
@@ -2600,6 +2803,10 @@ function brandUpdateAllDataLists() {
     // 更新收藏柜的品牌列表
     const closetBrandList = $('#closet-brand-list');
     if (closetBrandList) closetBrandList.innerHTML = options;
+
+    // 更新连体衣衣柜的品牌列表
+    const closetLeoBrandList = $('#closet-leo-brand-list');
+    if (closetLeoBrandList) closetLeoBrandList.innerHTML = options;
 }
 
 function initBrandManager() {
@@ -2758,26 +2965,32 @@ function initWishlist() {
 }
 
 /* ============================================
- * MODULE 9: CLOSET / BOUDOIR (收藏柜)
+ * MODULE 9: CLOSET / BOUDOIR (收藏柜 - 双衣柜)
  * ============================================ */
 const CLOSET_STORAGE_KEY = 'sissy_closet';
 
 const closetState = {
-    items: [],  // [{ id, type, brand, model, note }]
-    filter: 'all'
+    items: [],  // [{ id, category, brand, model, denier, type, color, note }]  category: 'pantyhose' | 'leotard'
+    activeTab: 'pantyhose'
 };
 
 async function closetLoad() {
     try {
         // 优先从 IndexedDB 读取
         const idbData = await appDBGet(CLOSET_STORAGE_KEY);
-        if (idbData) { closetState.items = idbData.items || []; return; }
-        // 兼容：从 localStorage 读取
-        const raw = localStorage.getItem(CLOSET_STORAGE_KEY);
-        if (raw) {
-            const data = JSON.parse(raw);
-            closetState.items = data.items || [];
+        if (idbData) { closetState.items = idbData.items || []; }
+        else {
+            // 兼容：从 localStorage 读取
+            const raw = localStorage.getItem(CLOSET_STORAGE_KEY);
+            if (raw) {
+                const data = JSON.parse(raw);
+                closetState.items = data.items || [];
+            }
         }
+        // 兼容旧数据：没有 category 的默认为 pantyhose
+        closetState.items.forEach((item) => {
+            if (!item.category) item.category = 'pantyhose';
+        });
     } catch (e) { closetState.items = []; }
 }
 
@@ -2791,13 +3004,15 @@ function closetGenId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-function closetAdd() {
-    const brand = ($('#closet-brand')?.value || '').trim();
-    const model = ($('#closet-model')?.value || '').trim();
-    const denierStr = ($('#closet-denier')?.value || '').trim();
-    const closetType = ($('#closet-type')?.value || '').trim();
-    const color = ($('#closet-color')?.value || '').trim();
-    const note = ($('#closet-note')?.value || '').trim();
+function closetAdd(category) {
+    const prefix = category === 'leotard' ? 'closet-leo' : 'closet-ph';
+    const brand = ($(`#${prefix}-brand`)?.value || '').trim();
+    const model = ($(`#${prefix}-model`)?.value || '').trim();
+    const denierEl = $(`#${prefix}-denier`);
+    const denierStr = denierEl ? (denierEl.value || '').trim() : '';
+    const closetType = ($(`#${prefix}-type`)?.value || '').trim();
+    const color = ($(`#${prefix}-color`)?.value || '').trim();
+    const note = ($(`#${prefix}-note`)?.value || '').trim();
 
     if (!brand) {
         alert('品牌不能为空哦~♠');
@@ -2812,6 +3027,7 @@ function closetAdd() {
 
     closetState.items.push({
         id: closetGenId(),
+        category: category,
         brand,
         model,
         denier,
@@ -2822,35 +3038,45 @@ function closetAdd() {
     closetSave();
 
     // 清空输入
-    if ($('#closet-brand')) $('#closet-brand').value = '';
-    if ($('#closet-model')) $('#closet-model').value = '';
-    if ($('#closet-denier')) $('#closet-denier').value = '';
-    if ($('#closet-type')) $('#closet-type').value = '';
-    if ($('#closet-color')) $('#closet-color').value = '';
-    if ($('#closet-note')) $('#closet-note').value = '';
+    if ($(`#${prefix}-brand`)) $(`#${prefix}-brand`).value = '';
+    if ($(`#${prefix}-model`)) $(`#${prefix}-model`).value = '';
+    if (denierEl) denierEl.value = '';
+    if ($(`#${prefix}-type`)) $(`#${prefix}-type`).value = '';
+    if ($(`#${prefix}-color`)) $(`#${prefix}-color`).value = '';
+    if ($(`#${prefix}-note`)) $(`#${prefix}-note`).value = '';
 
     if (navigator.vibrate) navigator.vibrate(50);
-    closetRenderList();
-    // 同步更新丝袜日记的收藏柜下拉选单
+    closetRenderList(category);
+    // 同步更新日记的收藏柜下拉选单
     if (typeof stkUpdateClosetSelect === 'function') stkUpdateClosetSelect();
+    if (typeof leoUpdateClosetSelect === 'function') leoUpdateClosetSelect();
 }
 
 function closetDelete(id) {
+    const item = closetState.items.find((i) => i.id === id);
+    const category = item ? item.category : 'pantyhose';
     closetState.items = closetState.items.filter((i) => i.id !== id);
     closetSave();
-    closetRenderList();
-    // 同步更新丝袜日记的收藏柜下拉选单
+    closetRenderList(category);
+    // 同步更新日记的收藏柜下拉选单
     if (typeof stkUpdateClosetSelect === 'function') stkUpdateClosetSelect();
+    if (typeof leoUpdateClosetSelect === 'function') leoUpdateClosetSelect();
 }
 
-function closetRenderList() {
-    const container = $('#closet-list');
+function closetRenderList(category) {
+    if (!category) category = closetState.activeTab;
+    const containerId = category === 'leotard' ? 'closet-leo-list' : 'closet-ph-list';
+    const container = $(`#${containerId}`);
     if (!container) return;
 
-    const items = closetState.items;
+    const items = closetState.items.filter((i) => i.category === category);
+    const unitLabel = category === 'leotard' ? '件' : '双';
 
     if (items.length === 0) {
-        container.innerHTML = `<div class="closet-list__empty">收藏柜还是空的~快把宝贝们收进来吧♠</div>`;
+        const emptyMsg = category === 'leotard'
+            ? '连体衣柜还是空的~快把宝贝们收进来吧♠'
+            : '丝袜柜还是空的~快把宝贝们收进来吧♠';
+        container.innerHTML = `<div class="closet-list__empty">${emptyMsg}</div>`;
         return;
     }
 
@@ -2920,7 +3146,7 @@ function closetRenderList() {
                 </div>
                 <div class="closet-group__meta">
                     <div class="closet-group__colors">${colorSummary}</div>
-                    <div class="closet-group__count">${totalCount}<span class="closet-group__count-unit">双</span></div>
+                    <div class="closet-group__count">${totalCount}<span class="closet-group__count-unit">${unitLabel}</span></div>
                 </div>
                 <div class="closet-group__arrow">›</div>
             </div>
@@ -2960,11 +3186,28 @@ function closetToggleGroup(groupKey) {
 
 function initCloset() {
     return closetLoad().then(() => {
-    // 绑定添加按钮
-    $('#btn-closet-add')?.addEventListener('click', closetAdd);
+    // 绑定添加按钮（双衣柜）
+    $('#btn-closet-ph-add')?.addEventListener('click', () => closetAdd('pantyhose'));
+    $('#btn-closet-leo-add')?.addEventListener('click', () => closetAdd('leotard'));
 
-    // 初始渲染
-    closetRenderList();
+    // 衣柜子页签切换
+    document.querySelectorAll('.closet-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.closetTab;
+            closetState.activeTab = targetTab;
+            // 切换 tab 按钮高亮
+            document.querySelectorAll('.closet-tab').forEach((t) => t.classList.remove('active'));
+            tab.classList.add('active');
+            // 切换内容面板
+            document.querySelectorAll('.closet-tab-content').forEach((c) => c.classList.remove('active'));
+            const targetPanel = $(`#closet-${targetTab}`);
+            if (targetPanel) targetPanel.classList.add('active');
+        });
+    });
+
+    // 初始渲染两个衣柜
+    closetRenderList('pantyhose');
+    closetRenderList('leotard');
 
     // 更新品牌 datalist
     brandUpdateAllDataLists();
@@ -2978,15 +3221,32 @@ function initCloset() {
  * ============================================ */
 
 function ootdUpdateUI() {
-    // 连体衣状态 — 暂时固定为"已穿着"（后续可扩展）
+    // 连体衣状态 — 从 Leotard Diary 读取
     const bodysuitEl = $('#ootd-status-bodysuit');
     const bodysuitDetailEl = $('#ootd-bodysuit-detail');
-    // 连体衣目前没有独立追踪，显示为固定提示
+    const todayLeo = leoGetTodayRecord();
     if (bodysuitEl) {
-        bodysuitEl.textContent = '已穿着';
-        bodysuitEl.classList.add('active');
+        if (todayLeo) {
+            const parts = [];
+            if (todayLeo.color) parts.push(todayLeo.color);
+            if (todayLeo.type) parts.push(todayLeo.type);
+            bodysuitEl.textContent = parts.length ? parts.join(' ') : 'Recorded';
+            bodysuitEl.classList.add('active');
+        } else {
+            bodysuitEl.textContent = '未记录';
+            bodysuitEl.classList.remove('active');
+        }
     }
-    if (bodysuitDetailEl) bodysuitDetailEl.textContent = '高叉连体衣';
+    if (bodysuitDetailEl) {
+        if (todayLeo) {
+            const label = [];
+            label.push(todayLeo.brand);
+            if (todayLeo.model) label.push(todayLeo.model);
+            bodysuitDetailEl.textContent = label.join(' ');
+        } else {
+            bodysuitDetailEl.textContent = '—';
+        }
+    }
 
     // Cage 状态 — 从 Wear Tracker 读取
     const cageEl = $('#ootd-status-cage');
@@ -3067,6 +3327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initMusicPlayer(),
         initWearTracker(),
         initStockingsDiary(),
+        initLeotardDiary(),
         initWishlist(),
         initCloset()
     ]);

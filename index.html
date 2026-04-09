@@ -92,7 +92,7 @@
                     <div class="ootd-label ootd-label--bodysuit" id="ootd-label-bodysuit">
                         <div class="ootd-label__line"></div>
                         <div class="ootd-label__tag">
-                            <div class="ootd-label__title">高叉连体衣</div>
+                            <div class="ootd-label__title">Today's Leotard</div>
                             <div class="ootd-label__detail" id="ootd-bodysuit-detail">—</div>
                         </div>
                     </div>
@@ -101,7 +101,7 @@
                     <div class="ootd-label ootd-label--stockings" id="ootd-label-stockings">
                         <div class="ootd-label__line"></div>
                         <div class="ootd-label__tag">
-                            <div class="ootd-label__title">今日丝袜</div>
+                            <div class="ootd-label__title">Today's Pantyhose</div>
                             <div class="ootd-label__detail" id="ootd-stockings-detail">—</div>
                         </div>
                     </div>
@@ -976,8 +976,8 @@
 
             <header class="header">
                 <div class="header__spade">♠ ♠ ♠</div>
-                <h1 class="header__title">Stockings Diary</h1>
-                <p class="header__subtitle">♠ 乖乖穿丝袜，做主人的丝袜娃娃 ♠</p>
+                <h1 class="header__title">Sissy's Dress-Up Diary</h1>
+                <p class="header__subtitle">♠ 乖女孩每天的穿搭，主人都要检查 ♠</p>
             </header>
 
             <section class="screen active stk-screen">
@@ -985,8 +985,8 @@
                 <div class="stk-today-card" id="stk-today-card">
                     <div class="stk-today__header">
                         <div class="stk-today__icon">🩶</div>
-                        <div class="stk-today__info">
-                            <div class="stk-today__title">今日丝袜</div>
+                    <div class="stk-today__info">
+                            <div class="stk-today__title">Today's Pantyhose</div>
                             <div class="stk-today__date" id="stk-today-date"></div>
                         </div>
                     </div>
@@ -1012,7 +1012,7 @@
                             <div class="stk-selected-preview__label">今日穿着预览</div>
                             <div class="stk-selected-preview__info" id="stk-preview-info"></div>
                         </div>
-                        <button class="btn-primary stk-record-btn" id="btn-stk-record">记录今日穿着 ♠</button>
+                        <button class="btn-primary stk-record-btn" id="btn-stk-record">记录今日丝袜 ♠</button>
                     </div>
                     <!-- 已记录状态 -->
                     <div class="stk-today__recorded hidden" id="stk-recorded">
@@ -1021,7 +1021,51 @@
                             <div class="stk-today__recorded-model" id="stk-recorded-model"></div>
                             <div class="stk-today__recorded-extra" id="stk-recorded-extra"></div>
                         </div>
-                        <div class="stk-today__recorded-badge">✓ 已记录</div>
+                        <div class="stk-today__recorded-badge">✓ Recorded</div>
+                    </div>
+                </div>
+
+                <!-- 今日连体衣卡片 -->
+                <div class="stk-today-card" id="leo-today-card">
+                    <div class="stk-today__header">
+                        <div class="stk-today__icon">🩱</div>
+                        <div class="stk-today__info">
+                            <div class="stk-today__title">Today's Leotard</div>
+                            <div class="stk-today__date" id="leo-today-date"></div>
+                        </div>
+                    </div>
+                    <!-- 未记录状态 -->
+                    <div class="stk-today__form" id="leo-form">
+                        <div class="stk-input-row">
+                            <div class="input-group" style="flex:1;">
+                                <label>从收藏柜选择</label>
+                                <select id="leo-closet-select" class="stk-select">
+                                    <option value="">请选择连体衣...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="stk-input-row">
+                            <div class="input-group" style="flex:1;">
+                                <label>选择颜色</label>
+                                <select id="leo-color-select" class="stk-select">
+                                    <option value="">请先选择连体衣...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="stk-selected-preview hidden" id="leo-selected-preview">
+                            <div class="stk-selected-preview__label">今日穿着预览</div>
+                            <div class="stk-selected-preview__info" id="leo-preview-info"></div>
+                        </div>
+                        <button class="btn-primary stk-record-btn" id="btn-leo-record">记录今日连体衣 ♠</button>
+                    </div>
+                    <!-- 已记录状态 -->
+                    <div class="stk-today__recorded hidden" id="leo-recorded">
+                        <div class="stk-today__recorded-info">
+                            <div class="stk-today__recorded-brand" id="leo-recorded-brand"></div>
+                            <div class="stk-today__recorded-model" id="leo-recorded-model"></div>
+                            <div class="stk-today__recorded-extra" id="leo-recorded-extra"></div>
+                        </div>
+                        <div class="stk-today__recorded-badge">✓ Recorded</div>
                     </div>
                 </div>
 
@@ -1171,63 +1215,124 @@
 
             <section class="screen active closet-screen">
 
-                <!-- 添加商品 -->
-                <div class="closet-add-card">
-                    <div class="closet-add-card__title">✨ 添加收藏</div>
-                    <div class="closet-form">
-                        <div class="closet-form-row">
-                            <div class="input-group">
-                                <label>品牌</label>
-                                <input type="text" id="closet-brand" placeholder="品牌名..." maxlength="30" list="closet-brand-list">
-                                <datalist id="closet-brand-list"></datalist>
+                <!-- 衣柜子页签 -->
+                <div class="closet-tabs">
+                    <button class="closet-tab active" data-closet-tab="pantyhose">
+                        🩶 Pantyhose
+                    </button>
+                    <button class="closet-tab" data-closet-tab="leotard">
+                        🩱 Leotard
+                    </button>
+                </div>
+
+                <!-- === Pantyhose 衣柜 === -->
+                <div class="closet-tab-content active" id="closet-pantyhose">
+                    <div class="closet-add-card">
+                        <div class="closet-add-card__title">✨ 添加丝袜</div>
+                        <div class="closet-form">
+                            <div class="closet-form-row">
+                                <div class="input-group">
+                                    <label>品牌</label>
+                                    <input type="text" id="closet-ph-brand" placeholder="品牌名..." maxlength="30" list="closet-brand-list">
+                                    <datalist id="closet-brand-list"></datalist>
+                                </div>
+                                <div class="input-group">
+                                    <label>商品型号</label>
+                                    <input type="text" id="closet-ph-model" placeholder="型号/名称..." maxlength="50">
+                                </div>
                             </div>
-                            <div class="input-group">
-                                <label>商品型号</label>
-                                <input type="text" id="closet-model" placeholder="型号/名称..." maxlength="50">
+                            <div class="closet-form-row">
+                                <div class="input-group">
+                                    <label>丹数</label>
+                                    <input type="number" id="closet-ph-denier" placeholder="如：15、40..." min="1" max="2000" step="1">
+                                </div>
+                                <div class="input-group">
+                                    <label>类型</label>
+                                    <select id="closet-ph-type" class="stk-select">
+                                        <option value="">请选择...</option>
+                                        <option value="袜裤">袜裤</option>
+                                        <option value="无缝">无缝</option>
+                                        <option value="开裆">开裆</option>
+                                        <option value="连裤袜">连裤袜</option>
+                                        <option value="过膝袜">过膝袜</option>
+                                        <option value="大腿袜">大腿袜</option>
+                                        <option value="中筒袜">中筒袜</option>
+                                        <option value="脚尖透明">脚尖透明</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>颜色</label>
+                                    <input type="text" id="closet-ph-color" placeholder="如：黑色..." maxlength="20">
+                                </div>
                             </div>
+                            <div class="closet-form-row">
+                                <div class="input-group">
+                                    <label>备注（可选）</label>
+                                    <input type="text" id="closet-ph-note" placeholder="尺码等..." maxlength="60">
+                                </div>
+                            </div>
+                            <button class="btn-primary" id="btn-closet-ph-add">收入柜中 ♠</button>
                         </div>
-                        <div class="closet-form-row">
-                            <div class="input-group">
-                                <label>丹数</label>
-                                <input type="number" id="closet-denier" placeholder="如：15、40..." min="1" max="2000" step="1">
-                            </div>
-                            <div class="input-group">
-                                <label>类型</label>
-                                <select id="closet-type" class="stk-select">
-                                    <option value="">请选择...</option>
-                                    <option value="袜裤">袜裤</option>
-                                    <option value="无缝">无缝</option>
-                                    <option value="开裆">开裆</option>
-                                    <option value="连裤袜">连裤袜</option>
-                                    <option value="过膝袜">过膝袜</option>
-                                    <option value="大腿袜">大腿袜</option>
-                                    <option value="中筒袜">中筒袜</option>
-                                    <option value="脚尖透明">脚尖透明</option>
-                                    <option value="其他">其他</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>颜色</label>
-                                <input type="text" id="closet-color" placeholder="如：黑色..." maxlength="20">
-                            </div>
+                    </div>
+                    <div class="closet-list-card">
+                        <div class="closet-list__title">🩶 我的丝袜收藏</div>
+                        <div class="closet-list" id="closet-ph-list">
+                            <div class="closet-list__empty">丝袜柜还是空的~快把宝贝们收进来吧♠</div>
                         </div>
-                        <div class="closet-form-row">
-                            <div class="input-group">
-                                <label>备注（可选）</label>
-                                <input type="text" id="closet-note" placeholder="尺码等..." maxlength="60">
-                            </div>
-                        </div>
-                        <button class="btn-primary" id="btn-closet-add">收入柜中 ♠</button>
                     </div>
                 </div>
 
-                <!-- 收藏列表 -->
-                <div class="closet-list-card">
-                    <div class="closet-list__title">💎 我的收藏</div>
-                    <div class="closet-list" id="closet-list">
-                        <div class="closet-list__empty">收藏柜还是空的~快把宝贝们收进来吧♠</div>
+                <!-- === Leotard 衣柜 === -->
+                <div class="closet-tab-content" id="closet-leotard">
+                    <div class="closet-add-card">
+                        <div class="closet-add-card__title">✨ 添加连体衣</div>
+                        <div class="closet-form">
+                            <div class="closet-form-row">
+                                <div class="input-group">
+                                    <label>品牌</label>
+                                    <input type="text" id="closet-leo-brand" placeholder="品牌名..." maxlength="30" list="closet-leo-brand-list">
+                                    <datalist id="closet-leo-brand-list"></datalist>
+                                </div>
+                                <div class="input-group">
+                                    <label>商品型号</label>
+                                    <input type="text" id="closet-leo-model" placeholder="型号/名称..." maxlength="50">
+                                </div>
+                            </div>
+                            <div class="closet-form-row">
+                                <div class="input-group">
+                                    <label>类型</label>
+                                    <select id="closet-leo-type" class="stk-select">
+                                        <option value="">请选择...</option>
+                                        <option value="高叉连体衣">高叉连体衣</option>
+                                        <option value="紧身泳衣">紧身泳衣</option>
+                                        <option value="体操服">体操服</option>
+                                        <option value="连体紧身衣">连体紧身衣</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>颜色</label>
+                                    <input type="text" id="closet-leo-color" placeholder="如：黑色..." maxlength="20">
+                                </div>
+                            </div>
+                            <div class="closet-form-row">
+                                <div class="input-group">
+                                    <label>备注（可选）</label>
+                                    <input type="text" id="closet-leo-note" placeholder="尺码等..." maxlength="60">
+                                </div>
+                            </div>
+                            <button class="btn-primary" id="btn-closet-leo-add">收入柜中 ♠</button>
+                        </div>
+                    </div>
+                    <div class="closet-list-card">
+                        <div class="closet-list__title">🩱 我的连体衣收藏</div>
+                        <div class="closet-list" id="closet-leo-list">
+                            <div class="closet-list__empty">连体衣柜还是空的~快把宝贝们收进来吧♠</div>
+                        </div>
                     </div>
                 </div>
+
             </section>
         </div>
 
@@ -1262,7 +1367,7 @@
                 </button>
                 <button class="tab-bar__item" data-tab="tab-stockings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8 2 6 5 6 9c0 3 0 5-2 8h16c-2-3-2-5-2-8 0-4-2-7-6-7z"/><path d="M9 17v2a3 3 0 006 0v-2"/></svg>
-                    <span>Silk</span>
+                    <span>Diary</span>
                 </button>
                 <button class="tab-bar__item" data-tab="tab-wishlist">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>

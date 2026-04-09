@@ -1707,6 +1707,42 @@ body::before {
 .closet-screen {
     gap: 14px;
 }
+
+/* Boudoir 衣柜子页签 */
+.closet-tabs {
+    display: flex; gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+}
+.closet-tab {
+    flex: 1;
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--text-muted);
+    background: none; border: none;
+    border-radius: calc(var(--radius) - 2px);
+    padding: 10px 8px;
+    cursor: pointer; transition: var(--transition);
+    font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+}
+.closet-tab.active {
+    color: var(--accent);
+    background: rgba(217,70,239,0.12);
+    box-shadow: 0 1px 4px rgba(217,70,239,0.15);
+}
+.closet-tab:active { opacity: 0.7; }
+
+.closet-tab-content {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+}
+.closet-tab-content.active {
+    display: flex;
+}
+
 .closet-filter {
     display: flex; gap: 8px; flex-wrap: wrap;
 }
