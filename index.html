@@ -880,6 +880,31 @@
                                 <datalist id="stk-model-list"></datalist>
                             </div>
                         </div>
+                        <div class="stk-input-row">
+                            <div class="input-group">
+                                <label>丹数</label>
+                                <input type="number" id="stk-denier" placeholder="如：15、40、80..." min="1" max="2000" step="1">
+                            </div>
+                            <div class="input-group">
+                                <label>类型</label>
+                                <select id="stk-type" class="stk-select">
+                                    <option value="">请选择...</option>
+                                    <option value="袜裤">袜裤</option>
+                                    <option value="无缝">无缝</option>
+                                    <option value="开裆">开裆</option>
+                                    <option value="连裤袜">连裤袜</option>
+                                    <option value="过膝袜">过膝袜</option>
+                                    <option value="大腿袜">大腿袜</option>
+                                    <option value="中筒袜">中筒袜</option>
+                                    <option value="脚尖透明">脚尖透明</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>颜色</label>
+                                <input type="text" id="stk-color" placeholder="如：黑色、肤色..." maxlength="20">
+                            </div>
+                        </div>
                         <button class="btn-primary stk-record-btn" id="btn-stk-record">记录今日穿着 ♠</button>
                     </div>
                     <!-- 已记录状态 -->
@@ -887,6 +912,7 @@
                         <div class="stk-today__recorded-info">
                             <div class="stk-today__recorded-brand" id="stk-recorded-brand"></div>
                             <div class="stk-today__recorded-model" id="stk-recorded-model"></div>
+                            <div class="stk-today__recorded-extra" id="stk-recorded-extra"></div>
                         </div>
                         <div class="stk-today__recorded-badge">✓ 已记录</div>
                     </div>
@@ -982,6 +1008,31 @@
                         </div>
                         <div class="wish-form-row">
                             <div class="input-group">
+                                <label>丹数</label>
+                                <input type="number" id="wish-denier" placeholder="如：15、40..." min="1" max="2000" step="1">
+                            </div>
+                            <div class="input-group">
+                                <label>类型</label>
+                                <select id="wish-type" class="stk-select">
+                                    <option value="">请选择...</option>
+                                    <option value="袜裤">袜裤</option>
+                                    <option value="无缝">无缝</option>
+                                    <option value="开裆">开裆</option>
+                                    <option value="连裤袜">连裤袜</option>
+                                    <option value="过膝袜">过膝袜</option>
+                                    <option value="大腿袜">大腿袜</option>
+                                    <option value="中筒袜">中筒袜</option>
+                                    <option value="脚尖透明">脚尖透明</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>颜色</label>
+                                <input type="text" id="wish-color" placeholder="如：黑色..." maxlength="20">
+                            </div>
+                        </div>
+                        <div class="wish-form-row">
+                            <div class="input-group">
                                 <label>价格</label>
                                 <input type="number" id="wish-price" placeholder="¥ 价格" min="0" step="0.01">
                             </div>
@@ -1023,8 +1074,6 @@
                                 <input type="text" id="closet-brand" placeholder="品牌名..." maxlength="30" list="closet-brand-list">
                                 <datalist id="closet-brand-list"></datalist>
                             </div>
-                        </div>
-                        <div class="closet-form-row">
                             <div class="input-group">
                                 <label>商品型号</label>
                                 <input type="text" id="closet-model" placeholder="型号/名称..." maxlength="50">
@@ -1032,8 +1081,33 @@
                         </div>
                         <div class="closet-form-row">
                             <div class="input-group">
+                                <label>丹数</label>
+                                <input type="number" id="closet-denier" placeholder="如：15、40..." min="1" max="2000" step="1">
+                            </div>
+                            <div class="input-group">
+                                <label>类型</label>
+                                <select id="closet-type" class="stk-select">
+                                    <option value="">请选择...</option>
+                                    <option value="袜裤">袜裤</option>
+                                    <option value="无缝">无缝</option>
+                                    <option value="开裆">开裆</option>
+                                    <option value="连裤袜">连裤袜</option>
+                                    <option value="过膝袜">过膝袜</option>
+                                    <option value="大腿袜">大腿袜</option>
+                                    <option value="中筒袜">中筒袜</option>
+                                    <option value="脚尖透明">脚尖透明</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>颜色</label>
+                                <input type="text" id="closet-color" placeholder="如：黑色..." maxlength="20">
+                            </div>
+                        </div>
+                        <div class="closet-form-row">
+                            <div class="input-group">
                                 <label>备注（可选）</label>
-                                <input type="text" id="closet-note" placeholder="颜色、尺码等..." maxlength="60">
+                                <input type="text" id="closet-note" placeholder="尺码等..." maxlength="60">
                             </div>
                         </div>
                         <button class="btn-primary" id="btn-closet-add">收入柜中 ♠</button>

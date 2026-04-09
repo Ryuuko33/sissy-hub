@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.2.0';
+const APP_VERSION = 'v2.3.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -2225,6 +2225,9 @@ function stkGetTodayRecord() {
 function stkRecord() {
     const brand = ($('#stk-brand')?.value || '').trim();
     const model = ($('#stk-model')?.value || '').trim();
+    const denierStr = ($('#stk-denier')?.value || '').trim();
+    const stkType = ($('#stk-type')?.value || '').trim();
+    const color = ($('#stk-color')?.value || '').trim();
 
     if (!brand) {
         alert('品牌不能为空哦~乖女孩要记清楚穿的什么♠');
@@ -2243,7 +2246,8 @@ function stkRecord() {
         return;
     }
 
-    stkState.records.push({ date: todayKey, brand, model });
+    const denier = denierStr ? parseInt(denierStr) : 0;
+    stkState.records.push({ date: todayKey, brand, model, denier, type: stkType, color });
     stkSaveData();
 
     if (navigator.vibrate) navigator.vibrate(50);
@@ -2251,6 +2255,9 @@ function stkRecord() {
     // 清空输入
     if ($('#stk-brand')) $('#stk-brand').value = '';
     if ($('#stk-model')) $('#stk-model').value = '';
+    if ($('#stk-denier')) $('#stk-denier').value = '';
+    if ($('#stk-type')) $('#stk-type').value = '';
+    if ($('#stk-color')) $('#stk-color').value = '';
 
     stkUpdateUI();
 }
@@ -2261,7 +2268,7 @@ function stkGetRanking() {
     stkState.records.forEach((r) => {
         const key = `${r.brand}|||${r.model}`;
         if (!countMap[key]) {
-            countMap[key] = { brand: r.brand, model: r.model, count: 0 };
+            countMap[key] = { brand: r.brand, model: r.model, denier: r.denier || 0, type: r.type || '', color: r.color || '', count: 0 };
         }
         countMap[key].count++;
     });
@@ -2304,6 +2311,13 @@ function stkUpdateUI() {
         if (cardEl) cardEl.classList.add('recorded');
         $('#stk-recorded-brand').textContent = todayRec.brand;
         $('#stk-recorded-model').textContent = todayRec.model;
+        // 显示额外信息（丹数、类型、颜色）
+        const extraParts = [];
+        if (todayRec.denier) extraParts.push(`${todayRec.denier}D`);
+        if (todayRec.type) extraParts.push(todayRec.type);
+        if (todayRec.color) extraParts.push(todayRec.color);
+        const extraEl = $('#stk-recorded-extra');
+        if (extraEl) extraEl.textContent = extraParts.length ? extraParts.join(' · ') : '';
     } else {
         // 未记录
         if (formEl) formEl.classList.remove('hidden');
@@ -2344,12 +2358,18 @@ function stkRenderRanking() {
     container.innerHTML = ranking.map((item, i) => {
         const medalIcons = ['👑', '🥈', '🥉'];
         const rankDisplay = i < 3 ? medalIcons[i] : (i + 1);
+        const extraParts = [];
+        if (item.denier) extraParts.push(`${item.denier}D`);
+        if (item.type) extraParts.push(item.type);
+        if (item.color) extraParts.push(item.color);
+        const extraHtml = extraParts.length ? `<div class="stk-ranking__item-extra">${extraParts.join(' · ')}</div>` : '';
         return `
         <div class="stk-ranking__item">
             <div class="stk-ranking__rank">${rankDisplay}</div>
             <div class="stk-ranking__item-info">
                 <div class="stk-ranking__item-brand">${item.brand}</div>
                 <div class="stk-ranking__item-model">${item.model}</div>
+                ${extraHtml}
             </div>
             <div class="stk-ranking__item-count">${item.count}<span class="stk-ranking__item-unit">次</span></div>
         </div>`;
@@ -2369,12 +2389,18 @@ function stkRenderHistory() {
     }
 
     container.innerHTML = recent.map((r) => {
+        const extraParts = [];
+        if (r.denier) extraParts.push(`${r.denier}D`);
+        if (r.type) extraParts.push(r.type);
+        if (r.color) extraParts.push(r.color);
+        const extraHtml = extraParts.length ? `<div class="stk-history__item-extra">${extraParts.join(' · ')}</div>` : '';
         return `
         <div class="stk-history__item">
             <div class="stk-history__item-date">${stkFormatDate(r.date)}</div>
             <div class="stk-history__item-info">
                 <div class="stk-history__item-brand">${r.brand}</div>
                 <div class="stk-history__item-model">${r.model}</div>
+                ${extraHtml}
             </div>
         </div>`;
     }).join('');
@@ -2535,6 +2561,9 @@ function wishAdd() {
     const brand = ($('#wish-brand')?.value || '').trim();
     const model = ($('#wish-model')?.value || '').trim();
     const priceStr = ($('#wish-price')?.value || '').trim();
+    const denierStr = ($('#wish-denier')?.value || '').trim();
+    const wishType = ($('#wish-type')?.value || '').trim();
+    const color = ($('#wish-color')?.value || '').trim();
 
     if (!brand) {
         alert('品牌不能为空哦~♠');
@@ -2546,11 +2575,15 @@ function wishAdd() {
     }
 
     const price = priceStr ? parseFloat(priceStr) : 0;
+    const denier = denierStr ? parseInt(denierStr) : 0;
 
     wishState.items.push({
         id: wishGenId(),
         brand,
         model,
+        denier,
+        type: wishType,
+        color,
         price,
         purchased: false
     });
@@ -2559,6 +2592,9 @@ function wishAdd() {
     // 清空输入
     if ($('#wish-brand')) $('#wish-brand').value = '';
     if ($('#wish-model')) $('#wish-model').value = '';
+    if ($('#wish-denier')) $('#wish-denier').value = '';
+    if ($('#wish-type')) $('#wish-type').value = '';
+    if ($('#wish-color')) $('#wish-color').value = '';
     if ($('#wish-price')) $('#wish-price').value = '';
 
     if (navigator.vibrate) navigator.vibrate(50);
@@ -2597,11 +2633,17 @@ function wishRenderList() {
 
     container.innerHTML = sorted.map((item) => {
         const priceDisplay = item.price > 0 ? `¥${item.price.toFixed(2)}` : '';
+        const extraParts = [];
+        if (item.denier) extraParts.push(`${item.denier}D`);
+        if (item.type) extraParts.push(item.type);
+        if (item.color) extraParts.push(item.color);
+        const extraHtml = extraParts.length ? `<div class="wish-item__extra">${extraParts.join(' · ')}</div>` : '';
         return `
         <div class="wish-item ${item.purchased ? 'purchased' : ''}">
             <div class="wish-item__info">
                 <div class="wish-item__brand">${item.brand}</div>
                 <div class="wish-item__model">${item.model}</div>
+                ${extraHtml}
             </div>
             ${priceDisplay ? `<div class="wish-item__price">${priceDisplay}</div>` : ''}
             <button class="wish-item__toggle ${item.purchased ? 'active' : ''}" onclick="wishTogglePurchased('${item.id}')" title="${item.purchased ? '标记为未购买' : '标记为已购买'}"></button>
@@ -2660,6 +2702,9 @@ function closetGenId() {
 function closetAdd() {
     const brand = ($('#closet-brand')?.value || '').trim();
     const model = ($('#closet-model')?.value || '').trim();
+    const denierStr = ($('#closet-denier')?.value || '').trim();
+    const closetType = ($('#closet-type')?.value || '').trim();
+    const color = ($('#closet-color')?.value || '').trim();
     const note = ($('#closet-note')?.value || '').trim();
 
     if (!brand) {
@@ -2671,10 +2716,15 @@ function closetAdd() {
         return;
     }
 
+    const denier = denierStr ? parseInt(denierStr) : 0;
+
     closetState.items.push({
         id: closetGenId(),
         brand,
         model,
+        denier,
+        type: closetType,
+        color,
         note
     });
     closetSave();
@@ -2682,6 +2732,9 @@ function closetAdd() {
     // 清空输入
     if ($('#closet-brand')) $('#closet-brand').value = '';
     if ($('#closet-model')) $('#closet-model').value = '';
+    if ($('#closet-denier')) $('#closet-denier').value = '';
+    if ($('#closet-type')) $('#closet-type').value = '';
+    if ($('#closet-color')) $('#closet-color').value = '';
     if ($('#closet-note')) $('#closet-note').value = '';
 
     if (navigator.vibrate) navigator.vibrate(50);
@@ -2706,11 +2759,17 @@ function closetRenderList() {
     }
 
     container.innerHTML = items.map((item) => {
+        const extraParts = [];
+        if (item.denier) extraParts.push(`${item.denier}D`);
+        if (item.type) extraParts.push(item.type);
+        if (item.color) extraParts.push(item.color);
+        const extraHtml = extraParts.length ? `<div class="closet-item__extra">${extraParts.join(' · ')}</div>` : '';
         return `
         <div class="closet-item">
             <div class="closet-item__info">
                 <div class="closet-item__brand">${item.brand}</div>
                 <div class="closet-item__model">${item.model}</div>
+                ${extraHtml}
                 ${item.note ? `<div class="closet-item__note">${item.note}</div>` : ''}
             </div>
             <button class="closet-item__delete" onclick="closetDelete('${item.id}')" title="删除">✕</button>

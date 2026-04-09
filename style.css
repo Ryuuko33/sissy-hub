@@ -1334,6 +1334,23 @@ body::before {
 .stk-input-row .input-group input {
     width: 100%;
 }
+/* 下拉选单样式 */
+.stk-select {
+    width: 100%;
+    background: var(--bg-dark); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    color: var(--text-primary); font-size: 0.9rem; font-family: inherit;
+    outline: none; transition: var(--transition);
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+.stk-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.stk-select option {
+    background: var(--bg-dark); color: var(--text-primary);
+}
 .stk-record-btn {
     margin-top: 4px;
 }
@@ -1352,6 +1369,10 @@ body::before {
 }
 .stk-today__recorded-model {
     font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;
+}
+.stk-today__recorded-extra {
+    font-size: 0.72rem; color: var(--text-muted); margin-top: 3px;
+    display: flex; gap: 8px; flex-wrap: wrap;
 }
 .stk-today__recorded-badge {
     font-size: 0.75rem; font-weight: 600;
@@ -1419,6 +1440,9 @@ body::before {
     font-size: 0.72rem; color: var(--text-secondary); margin-top: 1px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.stk-ranking__item-extra {
+    font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;
+}
 .stk-ranking__item-count {
     font-size: 1.1rem; font-weight: 700;
     color: var(--accent-light);
@@ -1469,6 +1493,9 @@ body::before {
 .stk-history__item-model {
     font-size: 0.68rem; color: var(--text-secondary); margin-top: 1px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stk-history__item-extra {
+    font-size: 0.62rem; color: var(--text-muted); margin-top: 2px;
 }
 
 /* ============================================
@@ -1594,6 +1621,9 @@ body::before {
 .wish-item__model {
     font-size: 0.72rem; color: var(--text-secondary); margin-top: 1px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wish-item__extra {
+    font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;
 }
 .wish-item__price {
     font-size: 0.9rem; font-weight: 700;
@@ -1725,6 +1755,9 @@ body::before {
 .closet-item__model {
     font-size: 0.72rem; color: var(--text-secondary); margin-top: 1px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.closet-item__extra {
+    font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;
 }
 .closet-item__note {
     font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;
