@@ -1282,6 +1282,17 @@ body::before {
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
 }
+.wear-history__item-delete {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: none; border: none;
+    color: var(--text-muted); font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition);
+    flex-shrink: 0; opacity: 0.4;
+    -webkit-appearance: none; appearance: none;
+    margin-left: 4px;
+}
+.wear-history__item-delete:active { color: var(--danger); opacity: 1; }
 
 /* ============================================
    STOCKINGS DIARY (Tab 6)
@@ -1353,6 +1364,23 @@ body::before {
 }
 .stk-record-btn {
     margin-top: 4px;
+}
+
+/* 丝袜选择预览 */
+.stk-selected-preview {
+    background: rgba(167,139,250,0.08);
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+}
+.stk-selected-preview.hidden { display: none; }
+.stk-selected-preview__label {
+    font-size: 0.68rem; color: var(--text-muted);
+    margin-bottom: 4px; letter-spacing: 1px;
+}
+.stk-selected-preview__info {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--accent-light);
 }
 
 /* Recorded state */
@@ -1773,6 +1801,105 @@ body::before {
     -webkit-appearance: none; appearance: none;
 }
 .closet-item__delete:active { color: var(--danger); opacity: 1; }
+
+/* 收藏柜分组样式 */
+.closet-group {
+    border-radius: var(--radius-sm);
+    background: rgba(217,70,239,0.04);
+    border: 1px solid rgba(217,70,239,0.08);
+    overflow: hidden;
+    transition: var(--transition);
+}
+.closet-group.expanded {
+    border-color: rgba(217,70,239,0.2);
+}
+.closet-group__header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px; cursor: pointer;
+    transition: var(--transition);
+}
+.closet-group__header:active {
+    background: rgba(217,70,239,0.08);
+}
+.closet-group__info { flex: 1; min-width: 0; }
+.closet-group__brand {
+    font-size: 0.85rem; font-weight: 600; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.closet-group__model {
+    font-size: 0.72rem; color: var(--text-secondary); margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.closet-group__extra {
+    font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;
+}
+.closet-group__meta {
+    text-align: right; flex-shrink: 0;
+}
+.closet-group__colors {
+    font-size: 0.65rem; color: var(--text-muted);
+    max-width: 120px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.closet-group__count {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--accent-light);
+    font-variant-numeric: tabular-nums;
+}
+.closet-group__count-unit {
+    font-size: 0.6rem; color: var(--text-muted); margin-left: 2px;
+}
+.closet-group__arrow {
+    font-size: 1.2rem; color: var(--text-muted);
+    transition: transform 0.3s ease; flex-shrink: 0;
+}
+.closet-group.expanded .closet-group__arrow {
+    transform: rotate(90deg);
+}
+
+/* 分组详情面板 */
+.closet-group__detail {
+    padding: 0 12px 12px;
+    border-top: 1px solid rgba(217,70,239,0.08);
+}
+.closet-group__detail.hidden { display: none; }
+.closet-detail__color-group {
+    margin-top: 8px;
+}
+.closet-detail__color-header {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 4px;
+}
+.closet-detail__color-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15);
+}
+.closet-detail__color-name {
+    font-size: 0.78rem; font-weight: 600; color: var(--text-primary);
+}
+.closet-detail__color-count {
+    font-size: 0.68rem; color: var(--text-muted);
+}
+.closet-detail__item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 0 4px 16px;
+}
+.closet-detail__item-label {
+    font-size: 0.7rem; color: var(--text-secondary);
+}
+.closet-detail__note {
+    font-size: 0.68rem; color: var(--text-muted); font-style: italic;
+}
+.closet-detail__item-delete {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: none; border: none;
+    color: var(--text-muted); font-size: 0.75rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition);
+    flex-shrink: 0; opacity: 0.4;
+    -webkit-appearance: none; appearance: none;
+}
+.closet-detail__item-delete:active { color: var(--danger); opacity: 1; }
 
 /* ============================================
    DATA MANAGEMENT (导入/导出)

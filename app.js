@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.3.0';
+const APP_VERSION = 'v2.4.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -2122,7 +2122,7 @@ function wearRenderTodayLog() {
         return;
     }
 
-    container.innerHTML = allSessions.map((s) => {
+    container.innerHTML = allSessions.map((s, idx) => {
         const startTime = new Date(s.start);
         const endTime = new Date(s.end);
         const timeStr = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')} - ${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
@@ -2134,8 +2134,37 @@ function wearRenderTodayLog() {
                 <div class="wear-history__item-time">${timeStr}</div>
             </div>
             <div class="wear-history__item-duration">${wearFormatDuration(s.duration)}</div>
+            <button class="wear-history__item-delete" onclick="wearDeleteSession('${s.type}', ${s.start})" title="删除">✕</button>
         </div>`;
     }).join('');
+}
+
+/**
+ * 删除一条佩戴记录
+ * @param {string} type 'cage' 或 'plug'
+ * @param {number} startTime 记录的开始时间戳
+ */
+function wearDeleteSession(type, startTime) {
+    const state = wearState[type];
+    const idx = state.todaySessions.findIndex((s) => s.start === startTime);
+    if (idx < 0) return;
+
+    const session = state.todaySessions[idx];
+    // 从今日总时长和总计中扣除
+    state.todayTotal -= session.duration;
+    state.allTimeTotal -= session.duration;
+    state.sessions--;
+
+    // 防止负数
+    if (state.todayTotal < 0) state.todayTotal = 0;
+    if (state.allTimeTotal < 0) state.allTimeTotal = 0;
+    if (state.sessions < 0) state.sessions = 0;
+
+    state.todaySessions.splice(idx, 1);
+
+    if (navigator.vibrate) navigator.vibrate(30);
+    wearSaveData();
+    wearUpdateUI();
 }
 
 function wearCheckDateChange() {
@@ -2223,18 +2252,17 @@ function stkGetTodayRecord() {
 }
 
 function stkRecord() {
-    const brand = ($('#stk-brand')?.value || '').trim();
-    const model = ($('#stk-model')?.value || '').trim();
-    const denierStr = ($('#stk-denier')?.value || '').trim();
-    const stkType = ($('#stk-type')?.value || '').trim();
-    const color = ($('#stk-color')?.value || '').trim();
+    const closetSelect = $('#stk-closet-select');
+    const colorSelect = $('#stk-color-select');
+    const closetId = closetSelect ? closetSelect.value : '';
+    const selectedColor = colorSelect ? colorSelect.value : '';
 
-    if (!brand) {
-        alert('品牌不能为空哦~乖女孩要记清楚穿的什么♠');
+    if (!closetId) {
+        alert('请先从收藏柜选择一双丝袜哦~乖女孩要记清楚穿的什么♠');
         return;
     }
-    if (!model) {
-        alert('型号不能为空哦~主人要知道你穿的是哪一款♠');
+    if (!selectedColor) {
+        alert('请选择颜色哦~主人要知道你穿的是哪一双♠');
         return;
     }
 
@@ -2246,18 +2274,32 @@ function stkRecord() {
         return;
     }
 
-    const denier = denierStr ? parseInt(denierStr) : 0;
-    stkState.records.push({ date: todayKey, brand, model, denier, type: stkType, color });
+    // 从 closet 中找到对应的丝袜信息
+    const closetItem = closetState.items.find((i) => i.id === closetId);
+    if (!closetItem) {
+        alert('选择的丝袜不存在，请重新选择~');
+        return;
+    }
+
+    stkState.records.push({
+        date: todayKey,
+        brand: closetItem.brand,
+        model: closetItem.model,
+        denier: closetItem.denier || 0,
+        type: closetItem.type || '',
+        color: selectedColor
+    });
     stkSaveData();
 
     if (navigator.vibrate) navigator.vibrate(50);
 
-    // 清空输入
-    if ($('#stk-brand')) $('#stk-brand').value = '';
-    if ($('#stk-model')) $('#stk-model').value = '';
-    if ($('#stk-denier')) $('#stk-denier').value = '';
-    if ($('#stk-type')) $('#stk-type').value = '';
-    if ($('#stk-color')) $('#stk-color').value = '';
+    // 重置选择
+    if (closetSelect) closetSelect.value = '';
+    if (colorSelect) {
+        colorSelect.innerHTML = '<option value="">请先选择丝袜...</option>';
+    }
+    const previewEl = $('#stk-selected-preview');
+    if (previewEl) previewEl.classList.add('hidden');
 
     stkUpdateUI();
 }
@@ -2325,17 +2367,8 @@ function stkUpdateUI() {
         if (cardEl) cardEl.classList.remove('recorded');
     }
 
-    // 更新品牌建议列表（使用统一品牌管理）
-    const brandList = $('#stk-brand-list');
-    if (brandList) {
-        brandList.innerHTML = brandGetAll()
-            .map((b) => `<option value="${b}">`).join('');
-    }
-    const modelList = $('#stk-model-list');
-    if (modelList) {
-        modelList.innerHTML = stkGetModelSuggestions()
-            .map((m) => `<option value="${m}">`).join('');
-    }
+    // 更新收藏柜下拉选单
+    stkUpdateClosetSelect();
 
     // 渲染排行榜
     stkRenderRanking();
@@ -2406,10 +2439,104 @@ function stkRenderHistory() {
     }).join('');
 }
 
+/**
+ * 更新丝袜日记中的收藏柜下拉选单
+ * 从 closetState.items 中按 brand+model 分组，生成选项
+ */
+function stkUpdateClosetSelect() {
+    const select = $('#stk-closet-select');
+    if (!select) return;
+
+    // 按 brand+model 分组（去重）
+    const groupMap = {};
+    closetState.items.forEach((item) => {
+        const key = `${item.brand}|||${item.model}`;
+        if (!groupMap[key]) {
+            groupMap[key] = {
+                brand: item.brand,
+                model: item.model,
+                denier: item.denier || 0,
+                type: item.type || '',
+                items: []
+            };
+        }
+        groupMap[key].items.push(item);
+    });
+
+    const groups = Object.values(groupMap);
+
+    if (groups.length === 0) {
+        select.innerHTML = '<option value="">收藏柜是空的~先去添加丝袜吧♠</option>';
+        return;
+    }
+
+    select.innerHTML = '<option value="">请选择丝袜...</option>' +
+        groups.map((g) => {
+            // 用第一个 item 的 id 作为 value（后续通过 id 找到具体 item）
+            const firstId = g.items[0].id;
+            const denierStr = g.denier ? ` ${g.denier}D` : '';
+            const typeStr = g.type ? ` · ${g.type}` : '';
+            const colorCount = new Set(g.items.filter(i => i.color).map(i => i.color)).size;
+            const colorHint = colorCount > 0 ? ` (${colorCount}色)` : '';
+            return `<option value="${firstId}">${g.brand} — ${g.model}${denierStr}${typeStr}${colorHint}</option>`;
+        }).join('');
+}
+
+/**
+ * 当选择丝袜后，更新颜色下拉选单
+ */
+function stkOnClosetSelectChange() {
+    const closetSelect = $('#stk-closet-select');
+    const colorSelect = $('#stk-color-select');
+    const previewEl = $('#stk-selected-preview');
+    const previewInfo = $('#stk-preview-info');
+    if (!closetSelect || !colorSelect) return;
+
+    const selectedId = closetSelect.value;
+    if (!selectedId) {
+        colorSelect.innerHTML = '<option value="">请先选择丝袜...</option>';
+        if (previewEl) previewEl.classList.add('hidden');
+        return;
+    }
+
+    // 找到选中的 item，然后找到同 brand+model 的所有 items
+    const selectedItem = closetState.items.find((i) => i.id === selectedId);
+    if (!selectedItem) return;
+
+    const sameGroup = closetState.items.filter(
+        (i) => i.brand === selectedItem.brand && i.model === selectedItem.model
+    );
+
+    // 收集所有颜色
+    const colors = new Set();
+    sameGroup.forEach((i) => {
+        if (i.color) colors.add(i.color);
+    });
+
+    if (colors.size === 0) {
+        colorSelect.innerHTML = '<option value="">无颜色信息</option><option value="未指定">未指定</option>';
+    } else {
+        colorSelect.innerHTML = '<option value="">请选择颜色...</option>' +
+            [...colors].map((c) => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    // 显示预览
+    if (previewEl && previewInfo) {
+        const parts = [selectedItem.brand, selectedItem.model];
+        if (selectedItem.denier) parts.push(`${selectedItem.denier}D`);
+        if (selectedItem.type) parts.push(selectedItem.type);
+        previewInfo.textContent = parts.join(' · ');
+        previewEl.classList.remove('hidden');
+    }
+}
+
 function initStockingsDiary() {
     return stkLoadData().then(() => {
     // 绑定记录按钮
     $('#btn-stk-record')?.addEventListener('click', stkRecord);
+
+    // 绑定收藏柜选择联动
+    $('#stk-closet-select')?.addEventListener('change', stkOnClosetSelectChange);
 
     // 初始渲染
     stkUpdateUI();
@@ -2739,12 +2866,16 @@ function closetAdd() {
 
     if (navigator.vibrate) navigator.vibrate(50);
     closetRenderList();
+    // 同步更新丝袜日记的收藏柜下拉选单
+    if (typeof stkUpdateClosetSelect === 'function') stkUpdateClosetSelect();
 }
 
 function closetDelete(id) {
     closetState.items = closetState.items.filter((i) => i.id !== id);
     closetSave();
     closetRenderList();
+    // 同步更新丝袜日记的收藏柜下拉选单
+    if (typeof stkUpdateClosetSelect === 'function') stkUpdateClosetSelect();
 }
 
 function closetRenderList() {
@@ -2758,23 +2889,108 @@ function closetRenderList() {
         return;
     }
 
-    container.innerHTML = items.map((item) => {
+    // 按 brand+model 分组
+    const groupMap = {};
+    items.forEach((item) => {
+        const key = `${item.brand}|||${item.model}`;
+        if (!groupMap[key]) {
+            groupMap[key] = {
+                brand: item.brand,
+                model: item.model,
+                denier: item.denier || 0,
+                type: item.type || '',
+                items: []
+            };
+        }
+        groupMap[key].items.push(item);
+    });
+
+    const groups = Object.values(groupMap);
+
+    container.innerHTML = groups.map((g, gi) => {
+        // 统计颜色和数量
+        const colorCountMap = {};
+        g.items.forEach((item) => {
+            const c = item.color || '未指定';
+            if (!colorCountMap[c]) colorCountMap[c] = [];
+            colorCountMap[c].push(item);
+        });
+        const totalCount = g.items.length;
+        const colorEntries = Object.entries(colorCountMap);
+        const colorSummary = colorEntries.map(([c, arr]) => `${c}×${arr.length}`).join('、');
+
         const extraParts = [];
-        if (item.denier) extraParts.push(`${item.denier}D`);
-        if (item.type) extraParts.push(item.type);
-        if (item.color) extraParts.push(item.color);
-        const extraHtml = extraParts.length ? `<div class="closet-item__extra">${extraParts.join(' · ')}</div>` : '';
+        if (g.denier) extraParts.push(`${g.denier}D`);
+        if (g.type) extraParts.push(g.type);
+        const extraStr = extraParts.length ? extraParts.join(' · ') : '';
+
+        // 详细面板中每个颜色的条目
+        const detailHtml = colorEntries.map(([color, arr]) => {
+            const itemRows = arr.map((item) => {
+                const noteStr = item.note ? `<span class="closet-detail__note">${item.note}</span>` : '';
+                return `<div class="closet-detail__item">
+                    <span class="closet-detail__item-label">${noteStr}</span>
+                    <button class="closet-detail__item-delete" onclick="closetDelete('${item.id}')" title="删除">✕</button>
+                </div>`;
+            }).join('');
+            return `<div class="closet-detail__color-group">
+                <div class="closet-detail__color-header">
+                    <span class="closet-detail__color-dot" style="background:${closetGetCSSColor(color)};"></span>
+                    <span class="closet-detail__color-name">${color}</span>
+                    <span class="closet-detail__color-count">×${arr.length}</span>
+                </div>
+                ${itemRows}
+            </div>`;
+        }).join('');
+
+        const groupKey = `cg_${gi}`;
+
         return `
-        <div class="closet-item">
-            <div class="closet-item__info">
-                <div class="closet-item__brand">${item.brand}</div>
-                <div class="closet-item__model">${item.model}</div>
-                ${extraHtml}
-                ${item.note ? `<div class="closet-item__note">${item.note}</div>` : ''}
+        <div class="closet-group" data-group-key="${groupKey}">
+            <div class="closet-group__header" onclick="closetToggleGroup('${groupKey}')">
+                <div class="closet-group__info">
+                    <div class="closet-group__brand">${g.brand}</div>
+                    <div class="closet-group__model">${g.model}</div>
+                    ${extraStr ? `<div class="closet-group__extra">${extraStr}</div>` : ''}
+                </div>
+                <div class="closet-group__meta">
+                    <div class="closet-group__colors">${colorSummary}</div>
+                    <div class="closet-group__count">${totalCount}<span class="closet-group__count-unit">双</span></div>
+                </div>
+                <div class="closet-group__arrow">›</div>
             </div>
-            <button class="closet-item__delete" onclick="closetDelete('${item.id}')" title="删除">✕</button>
+            <div class="closet-group__detail hidden" id="closet-detail-${groupKey}">
+                ${detailHtml}
+            </div>
         </div>`;
     }).join('');
+}
+
+/**
+ * 根据颜色名返回 CSS 颜色值（用于小圆点）
+ */
+function closetGetCSSColor(colorName) {
+    const colorMap = {
+        '黑色': '#333', '肤色': '#e8c4a0', '白色': '#f5f5f5',
+        '灰色': '#999', '咖啡色': '#6f4e37', '棕色': '#8b4513',
+        '红色': '#e74c3c', '粉色': '#f8a5c2', '紫色': '#9b59b6',
+        '蓝色': '#3498db', '深蓝': '#2c3e50', '绿色': '#27ae60',
+        '米色': '#f5e6cc', '裸色': '#e8c4a0', '透明': 'rgba(255,255,255,0.3)',
+        '未指定': 'rgba(217,70,239,0.3)'
+    };
+    return colorMap[colorName] || 'var(--accent)';
+}
+
+/**
+ * 展开/收起收藏柜分组详情
+ */
+function closetToggleGroup(groupKey) {
+    const detail = $(`#closet-detail-${groupKey}`);
+    if (!detail) return;
+    detail.classList.toggle('hidden');
+    // 切换箭头方向
+    const group = detail.closest('.closet-group');
+    if (group) group.classList.toggle('expanded');
 }
 
 function initCloset() {
