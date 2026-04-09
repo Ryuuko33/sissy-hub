@@ -133,7 +133,7 @@ body::before {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 6px 4px;
+    padding: 6px 0;
     gap: 0;
 }
 .tab-bar__scroll::-webkit-scrollbar { display: none; }
@@ -162,7 +162,7 @@ body::before {
     text-transform: uppercase;
     cursor: pointer;
     padding: 4px 0;
-    min-width: 52px;
+    min-width: 25%;
     flex-shrink: 0;
     transition: var(--transition);
     -webkit-appearance: none;
