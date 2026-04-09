@@ -109,7 +109,7 @@ body::before {
     display: flex;
 }
 
-/* --- Bottom Tab Bar --- */
+/* --- Bottom Tab Bar (可左右滚动) --- */
 .tab-bar {
     position: fixed;
     bottom: 0;
@@ -117,16 +117,26 @@ body::before {
     transform: translateX(-50%);
     width: 100%;
     max-width: 420px;
-    padding: 6px 0 env(safe-area-inset-bottom, 0px);
+    padding: 0 0 env(safe-area-inset-bottom, 0px);
     background: #0d0510;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
+    z-index: 50;
+    overflow: hidden;
+}
+.tab-bar__scroll {
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    z-index: 50;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 6px 4px;
+    gap: 0;
 }
+.tab-bar__scroll::-webkit-scrollbar { display: none; }
 /* 向下延伸覆盖 iPhone Home Indicator 区域，防止 PWA standalone 模式出现空白 */
 .tab-bar::after {
     content: '';
@@ -152,7 +162,8 @@ body::before {
     text-transform: uppercase;
     cursor: pointer;
     padding: 4px 0;
-    flex: 1;
+    min-width: 52px;
+    flex-shrink: 0;
     transition: var(--transition);
     -webkit-appearance: none;
     position: relative;
@@ -1986,6 +1997,153 @@ body::before {
     -webkit-appearance: none; appearance: none;
 }
 .import-prompt-btns .btn-secondary:active { opacity: 0.6; }
+
+/* ============================================
+   OOTD (今日穿搭)
+   ============================================ */
+.ootd-screen {
+    gap: 14px;
+    align-items: center;
+}
+
+/* 剪影容器 */
+.ootd-silhouette {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+.ootd-body {
+    width: 160px;
+    height: auto;
+    filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+
+/* 连体衣区域动画 */
+.ootd-bodysuit {
+    animation: bodysuitGlow 3s ease-in-out infinite alternate;
+}
+@keyframes bodysuitGlow {
+    0% { fill: rgba(217,70,239,0.06); }
+    100% { fill: rgba(217,70,239,0.14); }
+}
+
+/* 丝袜区域微光 */
+.ootd-stockings {
+    animation: stockingsShimmer 4s ease-in-out infinite alternate;
+}
+@keyframes stockingsShimmer {
+    0% { opacity: 0.2; }
+    100% { opacity: 0.35; }
+}
+
+/* 拉出标签 */
+.ootd-label {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    pointer-events: none;
+}
+.ootd-label--bodysuit {
+    top: 28%;
+    right: 2%;
+}
+.ootd-label--stockings {
+    top: 68%;
+    left: 2%;
+    flex-direction: row-reverse;
+}
+.ootd-label__line {
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+.ootd-label__tag {
+    background: rgba(217,70,239,0.1);
+    border: 1px solid rgba(217,70,239,0.25);
+    border-radius: 8px;
+    padding: 6px 10px;
+    min-width: 80px;
+}
+.ootd-label__title {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.ootd-label__detail {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent-light);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
+
+/* 信息卡片 */
+.ootd-info-card {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+.ootd-info__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.ootd-info__icon {
+    font-size: 1rem;
+    color: var(--accent);
+}
+.ootd-info__title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.ootd-info__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.ootd-info__item {
+    text-align: center;
+    background: rgba(217,70,239,0.04);
+    border: 1px solid rgba(217,70,239,0.08);
+    border-radius: var(--radius-sm);
+    padding: 10px 4px;
+}
+.ootd-info__item-icon {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+}
+.ootd-info__item-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.ootd-info__item-status {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ootd-info__item-status.active {
+    color: var(--accent-light);
+}
 
 /* ============================================
    RESPONSIVE

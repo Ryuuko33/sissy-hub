@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.4.0';
+const APP_VERSION = 'v2.5.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -436,61 +436,26 @@ function fixIOSBottomGap() {
 }
 
 function initTabs() {
-    const moreOverlay = document.getElementById('more-menu-overlay');
-    const btnMore = document.getElementById('btn-more-menu');
-
     // iOS PWA standalone 模式下动态修复底部空白
     fixIOSBottomGap();
 
-    // 底部 tab-bar 按钮点击（不含 More 按钮）
+    // 底部 tab-bar 所有按钮点击
     $$('.tab-bar__item').forEach((btn) => {
-        if (btn.id === 'btn-more-menu') return;
         btn.addEventListener('click', () => {
             const tabId = btn.dataset.tab;
             // 切换 tab 按钮高亮
             $$('.tab-bar__item').forEach((b) => b.classList.remove('active'));
             btn.classList.add('active');
-            // 清除 more-menu 中的高亮
-            $$('.more-menu__item').forEach((b) => b.classList.remove('active'));
             // 切换 tab 内容
             $$('.tab-content').forEach((t) => t.classList.remove('active'));
             const target = $(`#${tabId}`);
             if (target) target.classList.add('active');
-        });
-    });
 
-    // More 按钮 → 打开/关闭弹出菜单
-    if (btnMore) {
-        btnMore.addEventListener('click', () => {
-            moreOverlay.classList.toggle('active');
-        });
-    }
+            // 滚动当前激活的 tab 按钮到可视区域
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-    // 点击遮罩关闭
-    if (moreOverlay) {
-        moreOverlay.addEventListener('click', (e) => {
-            if (e.target === moreOverlay) {
-                moreOverlay.classList.remove('active');
-            }
-        });
-    }
-
-    // More 菜单内的按钮点击
-    $$('.more-menu__item').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const tabId = btn.dataset.tab;
-            // 清除底部 tab-bar 高亮，给 More 按钮加高亮
-            $$('.tab-bar__item').forEach((b) => b.classList.remove('active'));
-            if (btnMore) btnMore.classList.add('active');
-            // 清除 more-menu 中其他高亮，给当前加高亮
-            $$('.more-menu__item').forEach((b) => b.classList.remove('active'));
-            btn.classList.add('active');
-            // 切换 tab 内容
-            $$('.tab-content').forEach((t) => t.classList.remove('active'));
-            const target = $(`#${tabId}`);
-            if (target) target.classList.add('active');
-            // 关闭菜单
-            moreOverlay.classList.remove('active');
+            // 切换到 OOTD 时更新数据
+            if (tabId === 'tab-ootd') ootdUpdateUI();
         });
     });
 }
@@ -3007,6 +2972,73 @@ function initCloset() {
 }
 
 /* ============================================
+ * MODULE 10: OOTD (今日穿搭)
+ * 从 Wear Tracker 和 Stockings Diary 读取数据，
+ * 在剪影上展示今日穿搭状态。
+ * ============================================ */
+
+function ootdUpdateUI() {
+    // 连体衣状态 — 暂时固定为"已穿着"（后续可扩展）
+    const bodysuitEl = $('#ootd-status-bodysuit');
+    const bodysuitDetailEl = $('#ootd-bodysuit-detail');
+    // 连体衣目前没有独立追踪，显示为固定提示
+    if (bodysuitEl) {
+        bodysuitEl.textContent = '已穿着';
+        bodysuitEl.classList.add('active');
+    }
+    if (bodysuitDetailEl) bodysuitDetailEl.textContent = '高叉连体衣';
+
+    // Cage 状态 — 从 Wear Tracker 读取
+    const cageEl = $('#ootd-status-cage');
+    if (cageEl) {
+        if (wearState.cage.isWearing) {
+            cageEl.textContent = '佩戴中';
+            cageEl.classList.add('active');
+        } else if (wearState.cage.todaySessions.length > 0) {
+            cageEl.textContent = wearFormatHours(wearState.cage.todayTotal);
+            cageEl.classList.add('active');
+        } else {
+            cageEl.textContent = '未佩戴';
+            cageEl.classList.remove('active');
+        }
+    }
+
+    // 丝袜状态 — 从 Stockings Diary 读取
+    const stockingsEl = $('#ootd-status-stockings');
+    const stockingsDetailEl = $('#ootd-stockings-detail');
+    const todayStk = stkGetTodayRecord();
+    if (stockingsEl) {
+        if (todayStk) {
+            const parts = [];
+            if (todayStk.color) parts.push(todayStk.color);
+            if (todayStk.denier) parts.push(`${todayStk.denier}D`);
+            stockingsEl.textContent = parts.length ? parts.join(' ') : '已记录';
+            stockingsEl.classList.add('active');
+        } else {
+            stockingsEl.textContent = '未记录';
+            stockingsEl.classList.remove('active');
+        }
+    }
+    if (stockingsDetailEl) {
+        if (todayStk) {
+            const label = [];
+            label.push(todayStk.brand);
+            if (todayStk.model) label.push(todayStk.model);
+            stockingsDetailEl.textContent = label.join(' ');
+        } else {
+            stockingsDetailEl.textContent = '—';
+        }
+    }
+
+    // 高跟鞋状态 — 暂时固定提示（后续可扩展）
+    const heelsEl = $('#ootd-status-heels');
+    if (heelsEl) {
+        heelsEl.textContent = '♠';
+        heelsEl.classList.add('active');
+    }
+}
+
+/* ============================================
  * INIT
  * ============================================ */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -3044,6 +3076,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 初始化数据管理（导出/导入按钮）
     initDataManager();
+
+    // 初始化 OOTD 页面（依赖 Wear Tracker 和 Stockings Diary 数据）
+    ootdUpdateUI();
 
     // 检测首次打开，提示导入数据
     checkFirstLaunchImport();
