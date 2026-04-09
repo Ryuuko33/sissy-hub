@@ -48,16 +48,18 @@ html {
 
 /* PWA standalone 模式额外覆盖 —— 用伪元素铺满屏幕底部 */
 @media all and (display-mode: standalone) {
-    body::after {
-        content: '';
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: env(safe-area-inset-bottom, 34px);
-        background: rgba(13, 5, 16, 0.98);
-        z-index: 49;
-        pointer-events: none;
+    html {
+        background: #0d0510;
+    }
+    body {
+        /* 确保 body 底部没有空白 */
+        background: #0d0510;
+    }
+}
+/* 兼容 iOS Safari standalone 模式（navigator.standalone） */
+@supports (-webkit-touch-callout: none) {
+    html, body {
+        background: #0d0510;
     }
 }
 
@@ -116,7 +118,7 @@ body::before {
     width: 100%;
     max-width: 420px;
     padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
-    background: rgba(13, 5, 16, 0.98);
+    background: #0d0510;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
@@ -129,11 +131,11 @@ body::before {
 .tab-bar::after {
     content: '';
     position: absolute;
-    bottom: -100px;
+    bottom: -200px;
     left: 0;
     right: 0;
-    height: 100px;
-    background: rgba(13, 5, 16, 0.98);
+    height: 200px;
+    background: #0d0510;
 }
 
 .tab-bar__item {
@@ -203,11 +205,11 @@ body::before {
 .more-menu::after {
     content: '';
     position: absolute;
-    bottom: -100px;
+    bottom: -200px;
     left: 0;
     right: 0;
-    height: 100px;
-    background: rgba(26, 10, 32, 0.98);
+    height: 200px;
+    background: #1a0a20;
     border-radius: 0;
 }
 .more-menu-overlay.active .more-menu {
@@ -744,18 +746,21 @@ body::before {
     font-size: 0.7rem; color: var(--text-muted); margin-right: 2px;
 }
 .sort-btn {
-    font-size: 0.7rem; color: var(--text-muted);
-    background: none; border: 1px solid rgba(217,70,239,0.15);
-    border-radius: 12px; padding: 3px 10px;
+    font-size: 0.78rem; color: var(--text-muted);
+    background: none; border: 1px solid rgba(217,70,239,0.2);
+    border-radius: 12px; padding: 5px 14px;
     cursor: pointer; transition: var(--transition);
     font-family: inherit;
     -webkit-appearance: none; appearance: none;
+    min-width: 60px;
+    text-align: center;
 }
 .sort-btn.active {
     color: var(--accent); border-color: var(--accent);
-    background: rgba(217,70,239,0.1);
+    background: rgba(217,70,239,0.15);
+    font-weight: 600;
 }
-.sort-btn:active { background: rgba(217,70,239,0.15); }
+.sort-btn:active { background: rgba(217,70,239,0.2); }
 
 .btn-add-music {
     font-size: 0.78rem; color: var(--accent-light);

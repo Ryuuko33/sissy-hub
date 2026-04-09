@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.8.0';
+const APP_VERSION = 'v1.9.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -66,13 +66,12 @@ async function appDBSet(key, value) {
 }
 
 /**
- * 从 localStorage 迁移数据到 IndexedDB（仅在首次运行时执行）
- * 迁移完成后在 IndexedDB 中标记，避免重复迁移。
+ * 双向同步 localStorage ↔ IndexedDB
+ * 每次启动都检查两边数据，确保不丢失。
+ * iOS PWA 可能在更新时清除 localStorage 或 IndexedDB，
+ * 双向同步确保任一方的数据都能恢复。
  */
 async function migrateLocalStorageToIDB() {
-    const migrated = await appDBGet('__ls_migrated__');
-    if (migrated) return;
-
     const keys = [
         'sissy_training_calendar',
         'sissy_wear_tracker',
@@ -85,15 +84,19 @@ async function migrateLocalStorageToIDB() {
 
     for (const key of keys) {
         try {
-            const raw = localStorage.getItem(key);
-            if (raw) {
-                const data = JSON.parse(raw);
-                await appDBSet(key, data);
+            const idbData = await appDBGet(key);
+            const lsRaw = localStorage.getItem(key);
+            const lsData = lsRaw ? JSON.parse(lsRaw) : null;
+
+            if (lsData && !idbData) {
+                // localStorage 有数据但 IndexedDB 没有 → 迁移到 IndexedDB
+                await appDBSet(key, lsData);
+            } else if (idbData && !lsData) {
+                // IndexedDB 有数据但 localStorage 没有 → 恢复到 localStorage
+                try { localStorage.setItem(key, JSON.stringify(idbData)); } catch (e) {}
             }
         } catch (e) {}
     }
-
-    await appDBSet('__ls_migrated__', true);
 }
 
 /* ============================================
@@ -186,9 +189,50 @@ function playPhaseEnd() {
 /* ============================================
  * TAB NAVIGATION
  * ============================================ */
+/**
+ * iOS PWA standalone 模式下修复底部空白区域
+ * iOS 的 Home Indicator 区域在 PWA 中可能显示为空白，
+ * 通过 JS 动态创建覆盖层确保底部被正确填充。
+ */
+function fixIOSBottomGap() {
+    const isStandalone = window.navigator.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches;
+
+    if (!isStandalone) return;
+
+    // 强制设置 html 和 body 背景色
+    document.documentElement.style.background = '#0d0510';
+    document.body.style.background = '#0d0510';
+
+    // 创建一个固定在底部的覆盖层
+    const bottomCover = document.createElement('div');
+    bottomCover.id = 'ios-bottom-cover';
+    bottomCover.style.cssText = `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: env(safe-area-inset-bottom, 34px);
+        background: #0d0510;
+        z-index: 48;
+        pointer-events: none;
+    `;
+    document.body.appendChild(bottomCover);
+
+    // 监听 resize 事件，确保覆盖层始终存在
+    window.addEventListener('resize', () => {
+        if (!document.getElementById('ios-bottom-cover')) {
+            document.body.appendChild(bottomCover);
+        }
+    });
+}
+
 function initTabs() {
     const moreOverlay = document.getElementById('more-menu-overlay');
     const btnMore = document.getElementById('btn-more-menu');
+
+    // iOS PWA standalone 模式下动态修复底部空白
+    fixIOSBottomGap();
 
     // 底部 tab-bar 按钮点击（不含 More 按钮）
     $$('.tab-bar__item').forEach((btn) => {
@@ -977,12 +1021,17 @@ function musicGetSortedTracks() {
     const tracks = [...pl.tracks];
     if (musicState.sortMode === 'name') {
         tracks.sort((a, b) => {
-            const cmp = a.name.localeCompare(b.name, 'zh-Hans');
+            const nameA = (a.name || '').toLowerCase();
+            const nameB = (b.name || '').toLowerCase();
+            const cmp = nameA.localeCompare(nameB, 'zh-Hans');
             return musicState.sortAsc ? cmp : -cmp;
         });
     } else {
+        // 按添加时间排序
         tracks.sort((a, b) => {
-            const cmp = (a.addedAt || 0) - (b.addedAt || 0);
+            const timeA = a.addedAt || 0;
+            const timeB = b.addedAt || 0;
+            const cmp = timeA - timeB;
             return musicState.sortAsc ? cmp : -cmp;
         });
     }
@@ -1055,6 +1104,12 @@ function musicRenderPlaylist() {
         });
     });
 
+    // 滚动到当前播放的歌曲
+    const activeItem = container.querySelector('.playlist__item.active');
+    if (activeItem) {
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     musicRenderPlaylistSelector();
 }
 
@@ -1080,10 +1135,13 @@ function musicSetSort(mode) {
         musicState.sortAsc = true;
     }
     // 排序变更后，根据当前播放歌曲 ID 重新定位索引
+    const sorted = musicGetSortedTracks();
     if (musicState._playingTrackId) {
-        const sorted = musicGetSortedTracks();
         const newIdx = sorted.findIndex((t) => t.id === musicState._playingTrackId);
         if (newIdx >= 0) musicState.currentIndex = newIdx;
+    } else if (musicState.currentIndex >= 0 && musicState.currentIndex < sorted.length) {
+        // 没有正在播放的歌曲时，重置索引
+        musicState.currentIndex = -1;
     }
     musicSaveMeta();
     musicRenderSortState();
@@ -2456,9 +2514,10 @@ function closetRenderList() {
     }
 
     container.innerHTML = filtered.map((item) => {
+        const typeEmoji = item.type === '内饰' ? '🔒' : '👗';
         return `
         <div class="closet-item">
-            <div class="closet-item__type-badge">${item.type}</div>
+            <div class="closet-item__type-badge">${typeEmoji} ${item.type}</div>
             <div class="closet-item__info">
                 <div class="closet-item__brand">${item.brand}</div>
                 <div class="closet-item__model">${item.model}</div>
