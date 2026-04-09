@@ -261,7 +261,7 @@ body::before {
 /* --- App Version Badge --- */
 .app-version {
     position: fixed;
-    top: 8px;
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
     right: 12px;
     font-size: 0.55rem;
     color: var(--text-muted);

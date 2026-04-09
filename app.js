@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.9.0';
+const APP_VERSION = 'v2.0.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -94,6 +94,17 @@ async function migrateLocalStorageToIDB() {
             } else if (idbData && !lsData) {
                 // IndexedDB 有数据但 localStorage 没有 → 恢复到 localStorage
                 try { localStorage.setItem(key, JSON.stringify(idbData)); } catch (e) {}
+            } else if (idbData && lsData) {
+                // 两边都有数据 → 选择内容更丰富的那个同步到另一边
+                const idbStr = JSON.stringify(idbData);
+                const lsStr = JSON.stringify(lsData);
+                if (idbStr.length > lsStr.length) {
+                    // IndexedDB 数据更丰富 → 同步到 localStorage
+                    try { localStorage.setItem(key, idbStr); } catch (e) {}
+                } else if (lsStr.length > idbStr.length) {
+                    // localStorage 数据更丰富 → 同步到 IndexedDB
+                    await appDBSet(key, lsData);
+                }
             }
         } catch (e) {}
     }
@@ -195,34 +206,49 @@ function playPhaseEnd() {
  * 通过 JS 动态创建覆盖层确保底部被正确填充。
  */
 function fixIOSBottomGap() {
+    // 不限制 standalone 模式，所有 iOS 设备都应用
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const isStandalone = window.navigator.standalone === true ||
         window.matchMedia('(display-mode: standalone)').matches;
 
-    if (!isStandalone) return;
-
-    // 强制设置 html 和 body 背景色
+    // 强制设置 html 和 body 背景色（所有模式）
     document.documentElement.style.background = '#0d0510';
     document.body.style.background = '#0d0510';
 
-    // 创建一个固定在底部的覆盖层
+    if (!isIOS && !isStandalone) return;
+
+    // 创建一个固定在底部的覆盖层，使用较大的固定高度确保覆盖
     const bottomCover = document.createElement('div');
     bottomCover.id = 'ios-bottom-cover';
     bottomCover.style.cssText = `
         position: fixed;
-        bottom: 0;
+        bottom: -50px;
         left: 0;
         right: 0;
-        height: env(safe-area-inset-bottom, 34px);
+        height: 100px;
         background: #0d0510;
         z-index: 48;
         pointer-events: none;
     `;
     document.body.appendChild(bottomCover);
 
-    // 监听 resize 事件，确保覆盖层始终存在
-    window.addEventListener('resize', () => {
+    // 监听 resize 和 orientationchange 事件，确保覆盖层始终存在
+    const ensureCover = () => {
         if (!document.getElementById('ios-bottom-cover')) {
             document.body.appendChild(bottomCover);
+        }
+    };
+    window.addEventListener('resize', ensureCover);
+    window.addEventListener('orientationchange', ensureCover);
+
+    // 页面可见性变化时也检查（从后台恢复时）
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            ensureCover();
+            // 重新强制背景色
+            document.documentElement.style.background = '#0d0510';
+            document.body.style.background = '#0d0510';
         }
     });
 }
@@ -2450,7 +2476,6 @@ function closetGenId() {
 }
 
 function closetAdd() {
-    const type = ($('#closet-type')?.value || '服饰').trim();
     const brand = ($('#closet-brand')?.value || '').trim();
     const model = ($('#closet-model')?.value || '').trim();
     const note = ($('#closet-note')?.value || '').trim();
@@ -2466,14 +2491,13 @@ function closetAdd() {
 
     closetState.items.push({
         id: closetGenId(),
-        type,
         brand,
         model,
         note
     });
     closetSave();
 
-    // 清空输入（保留类型选择）
+    // 清空输入
     if ($('#closet-brand')) $('#closet-brand').value = '';
     if ($('#closet-model')) $('#closet-model').value = '';
     if ($('#closet-note')) $('#closet-note').value = '';
@@ -2488,36 +2512,20 @@ function closetDelete(id) {
     closetRenderList();
 }
 
-function closetSetFilter(filter) {
-    closetState.filter = filter;
-    // 更新筛选按钮高亮
-    $$('#closet-filter .closet-filter-btn').forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.filter === filter);
-    });
-    closetRenderList();
-}
-
 function closetRenderList() {
     const container = $('#closet-list');
     if (!container) return;
 
-    const filtered = closetState.filter === 'all'
-        ? closetState.items
-        : closetState.items.filter((i) => i.type === closetState.filter);
+    const items = closetState.items;
 
-    if (filtered.length === 0) {
-        const msg = closetState.filter === 'all'
-            ? '收藏柜还是空的~快把宝贝们收进来吧♠'
-            : `还没有${closetState.filter}类的收藏~♠`;
-        container.innerHTML = `<div class="closet-list__empty">${msg}</div>`;
+    if (items.length === 0) {
+        container.innerHTML = `<div class="closet-list__empty">收藏柜还是空的~快把宝贝们收进来吧♠</div>`;
         return;
     }
 
-    container.innerHTML = filtered.map((item) => {
-        const typeEmoji = item.type === '内饰' ? '🔒' : '👗';
+    container.innerHTML = items.map((item) => {
         return `
         <div class="closet-item">
-            <div class="closet-item__type-badge">${typeEmoji} ${item.type}</div>
             <div class="closet-item__info">
                 <div class="closet-item__brand">${item.brand}</div>
                 <div class="closet-item__model">${item.model}</div>
@@ -2532,13 +2540,6 @@ function initCloset() {
     return closetLoad().then(() => {
     // 绑定添加按钮
     $('#btn-closet-add')?.addEventListener('click', closetAdd);
-
-    // 绑定筛选按钮
-    $$('#closet-filter .closet-filter-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            closetSetFilter(btn.dataset.filter);
-        });
-    });
 
     // 初始渲染
     closetRenderList();
