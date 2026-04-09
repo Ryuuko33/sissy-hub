@@ -2038,8 +2038,10 @@ body::before {
    OOTD (今日穿搭)
    ============================================ */
 .ootd-screen {
-    gap: 14px;
+    gap: 8px;
     align-items: center;
+    padding-bottom: 4px;
+    overflow: hidden;
 }
 
 /* 剪影容器 */
@@ -2047,6 +2049,7 @@ body::before {
     position: relative;
     width: 100%;
     flex: 1;
+    min-height: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2055,7 +2058,6 @@ body::before {
 }
 .ootd-body {
     height: 100%;
-    max-height: 60vh;
     width: auto;
     object-fit: contain;
     mix-blend-mode: screen;
@@ -2119,10 +2121,11 @@ body::before {
 /* 信息卡片 */
 .ootd-info-card {
     width: 100%;
+    flex-shrink: 0;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 14px 16px;
+    padding: 10px 14px;
 }
 .ootd-info__header {
     display: flex;
