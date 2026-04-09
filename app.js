@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.1.1';
+const APP_VERSION = 'v2.2.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -107,6 +107,188 @@ async function migrateLocalStorageToIDB() {
                 }
             }
         } catch (e) {}
+    }
+}
+
+/* ============================================
+ * 数据导出 / 导入（跨沙盒数据迁移）
+ * iOS PWA 与 Safari 存储隔离，需要手动导出/导入
+ * ============================================ */
+const DATA_EXPORT_KEYS = [
+    'sissy_training_calendar',
+    'sissy_wear_tracker',
+    'sissy_stockings_diary',
+    'sissy_brand_list',
+    'sissy_wishlist',
+    'sissy_closet',
+    'sissy_music_meta'
+];
+
+/**
+ * 导出所有用户数据为 JSON 文件并下载
+ */
+async function exportAllData() {
+    try {
+        const exportData = {
+            _meta: {
+                app: 'Sissy Hub',
+                version: APP_VERSION,
+                exportedAt: new Date().toISOString()
+            }
+        };
+
+        for (const key of DATA_EXPORT_KEYS) {
+            const idbData = await appDBGet(key);
+            if (idbData !== null) {
+                exportData[key] = idbData;
+            } else {
+                // 兜底从 localStorage 读取
+                const lsRaw = localStorage.getItem(key);
+                if (lsRaw) {
+                    try { exportData[key] = JSON.parse(lsRaw); } catch (e) {}
+                }
+            }
+        }
+
+        const jsonStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sissy_hub_backup_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        alert('♠ 数据导出成功！备份文件已下载~');
+    } catch (e) {
+        alert('导出失败：' + e.message);
+    }
+}
+
+/**
+ * 从 JSON 文件导入数据，写入 IndexedDB + localStorage
+ * @param {File} file 用户选择的 JSON 文件
+ * @returns {Promise<boolean>} 是否导入成功
+ */
+async function importAllData(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                // 校验是否为有效的备份文件
+                if (!data._meta || data._meta.app !== 'Sissy Hub') {
+                    alert('这不是有效的 Sissy Hub 备份文件哦~');
+                    resolve(false);
+                    return;
+                }
+
+                let importedCount = 0;
+                for (const key of DATA_EXPORT_KEYS) {
+                    if (data[key] !== undefined && data[key] !== null) {
+                        await appDBSet(key, data[key]);
+                        try { localStorage.setItem(key, JSON.stringify(data[key])); } catch (err) {}
+                        importedCount++;
+                    }
+                }
+
+                if (importedCount > 0) {
+                    // 标记已导入，不再弹出首次提示
+                    try { localStorage.setItem('sissy_hub_imported', '1'); } catch (err) {}
+                    alert(`♠ 导入成功！已恢复 ${importedCount} 项数据~\n页面将自动刷新♠`);
+                    location.reload();
+                    resolve(true);
+                } else {
+                    alert('备份文件中没有找到可恢复的数据~');
+                    resolve(false);
+                }
+            } catch (err) {
+                alert('导入失败：文件格式不正确 — ' + err.message);
+                resolve(false);
+            }
+        };
+        reader.onerror = () => {
+            alert('读取文件失败，请重试~');
+            resolve(false);
+        };
+        reader.readAsText(file);
+    });
+}
+
+/**
+ * 检测是否为全新安装（所有数据 key 都为空）
+ * @returns {Promise<boolean>}
+ */
+async function isFirstLaunch() {
+    // 如果已经标记过导入/跳过，则不再提示
+    if (localStorage.getItem('sissy_hub_imported')) return false;
+
+    for (const key of DATA_EXPORT_KEYS) {
+        const idbData = await appDBGet(key);
+        if (idbData !== null) return false;
+        const lsRaw = localStorage.getItem(key);
+        if (lsRaw) return false;
+    }
+    return true;
+}
+
+/**
+ * 初始化数据管理功能（导出/导入按钮 + 首次打开提示）
+ */
+function initDataManager() {
+    // Settings 页面的导出按钮
+    const btnExport = $('#btn-data-export');
+    if (btnExport) {
+        btnExport.addEventListener('click', exportAllData);
+    }
+
+    // Settings 页面的导入按钮
+    const btnImport = $('#btn-data-import');
+    const importInput = $('#data-import-input');
+    if (btnImport && importInput) {
+        btnImport.addEventListener('click', () => importInput.click());
+        importInput.addEventListener('change', async (e) => {
+            if (e.target.files && e.target.files[0]) {
+                await importAllData(e.target.files[0]);
+                importInput.value = '';
+            }
+        });
+    }
+
+    // 首次打开提示弹窗
+    const promptOverlay = $('#import-prompt-overlay');
+    const btnPromptImport = $('#btn-prompt-import');
+    const btnPromptSkip = $('#btn-prompt-skip');
+    const promptInput = $('#data-import-prompt-input');
+
+    if (promptOverlay && btnPromptImport && btnPromptSkip && promptInput) {
+        btnPromptImport.addEventListener('click', () => promptInput.click());
+        promptInput.addEventListener('change', async (e) => {
+            if (e.target.files && e.target.files[0]) {
+                await importAllData(e.target.files[0]);
+                promptInput.value = '';
+            }
+        });
+        btnPromptSkip.addEventListener('click', () => {
+            try { localStorage.setItem('sissy_hub_imported', '1'); } catch (err) {}
+            promptOverlay.style.display = 'none';
+        });
+    }
+}
+
+/**
+ * 首次打开时显示导入提示
+ */
+async function checkFirstLaunchImport() {
+    const isFirst = await isFirstLaunch();
+    if (isFirst) {
+        const overlay = $('#import-prompt-overlay');
+        if (overlay) overlay.style.display = 'flex';
     }
 }
 
@@ -2584,4 +2766,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 初始化完成后统一更新品牌 datalist
     brandUpdateAllDataLists();
+
+    // 初始化数据管理（导出/导入按钮）
+    initDataManager();
+
+    // 检测首次打开，提示导入数据
+    checkFirstLaunchImport();
 });

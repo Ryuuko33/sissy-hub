@@ -937,6 +937,19 @@
                         <div class="brand-empty">还没有添加品牌哦~快加几个常用的吧♠</div>
                     </div>
                 </div>
+
+                <!-- 数据管理 -->
+                <div class="settings-section">
+                    <div class="settings-section__title">💾 数据管理</div>
+                    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:12px;">
+                        导出/导入你的所有数据，换设备或重新添加到桌面时不会丢失哦~♠
+                    </p>
+                    <div class="data-mgmt-btns">
+                        <button class="btn-data-export" id="btn-data-export">📤 导出数据</button>
+                        <button class="btn-data-import" id="btn-data-import">📥 导入数据</button>
+                    </div>
+                    <input type="file" id="data-import-input" accept=".json" style="display:none;position:absolute;width:0;height:0;overflow:hidden;">
+                </div>
             </section>
         </div>
 
@@ -1106,6 +1119,23 @@
 
     <!-- Hidden audio element -->
     <audio id="audio-player" preload="auto"></audio>
+
+    <!-- 首次打开导入提示弹窗 -->
+    <div id="import-prompt-overlay" class="import-prompt-overlay" style="display:none;">
+        <div class="import-prompt-card">
+            <div class="import-prompt-card__icon">📦</div>
+            <div class="import-prompt-card__title">欢迎回来，乖女孩♠</div>
+            <p class="import-prompt-card__desc">
+                检测到这是全新安装，之前的数据需要导入才能恢复哦~<br>
+                如果你之前导出过数据备份，现在就选择文件导入吧♠
+            </p>
+            <div class="import-prompt-btns">
+                <button class="btn-primary" id="btn-prompt-import">📥 选择备份文件导入</button>
+                <button class="btn-secondary" id="btn-prompt-skip">跳过，从零开始</button>
+            </div>
+            <input type="file" id="data-import-prompt-input" accept=".json" style="display:none;position:absolute;width:0;height:0;overflow:hidden;">
+        </div>
+    </div>
 
     <script src="./app.js"></script>
 </body>
