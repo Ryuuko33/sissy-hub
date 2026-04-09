@@ -39,6 +39,13 @@ body {
     -webkit-user-select: none;
 }
 
+/* 确保 PWA standalone 模式下底部安全区域有背景色覆盖 */
+html {
+    background: var(--bg-dark);
+    min-height: 100%;
+    min-height: 100dvh;
+}
+
 /* --- Background Gradient --- */
 body::before {
     content: '';
@@ -76,7 +83,7 @@ body::before {
     flex: 1;
     flex-direction: column;
     padding: 0 20px;
-    padding-bottom: calc(44px + env(safe-area-inset-bottom, 16px));
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 16px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 0;
@@ -93,8 +100,8 @@ body::before {
     transform: translateX(-50%);
     width: 100%;
     max-width: 420px;
-    padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
-    background: rgba(13, 5, 16, 0.95);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+    background: rgba(13, 5, 16, 0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
@@ -103,21 +110,32 @@ body::before {
     justify-content: space-around;
     z-index: 50;
 }
+/* 向下延伸覆盖 iPhone Home Indicator 区域，防止 PWA standalone 模式出现空白 */
+.tab-bar::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #0d0510;
+}
 
 .tab-bar__item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 0.45rem;
+    font-size: 0.55rem;
     font-family: inherit;
     letter-spacing: 0.3px;
     text-transform: uppercase;
     cursor: pointer;
-    padding: 0 6px;
+    padding: 4px 0;
+    flex: 1;
     transition: var(--transition);
     -webkit-appearance: none;
     position: relative;
@@ -129,8 +147,8 @@ body::before {
     filter: drop-shadow(0 0 6px var(--accent-glow));
 }
 .tab-bar__item svg {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
 }
 
@@ -165,6 +183,17 @@ body::before {
     z-index: 61;
     transform: translateX(-50%) translateY(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* 向下延伸覆盖 iPhone Home Indicator 区域 */
+.more-menu::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: rgba(26, 10, 32, 0.98);
+    border-radius: 0;
 }
 .more-menu-overlay.active .more-menu {
     transform: translateX(-50%) translateY(0);
@@ -1421,6 +1450,276 @@ body::before {
     font-size: 0.68rem; color: var(--text-secondary); margin-top: 1px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* ============================================
+   SETTINGS - BRAND MANAGER
+   ============================================ */
+.settings-screen {
+    gap: 14px;
+}
+.settings-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+.settings-section__title {
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--accent-light); margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+.brand-add-row {
+    display: flex; gap: 8px; margin-bottom: 12px;
+}
+.brand-add-row input {
+    flex: 1; min-width: 0;
+    background: var(--bg-dark); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    color: var(--text-primary); font-size: 0.9rem; font-family: inherit;
+    outline: none; transition: var(--transition);
+    -webkit-appearance: none; appearance: none;
+}
+.brand-add-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.brand-add-btn {
+    padding: 10px 16px; border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--accent-dim), var(--accent));
+    border: none; color: white; font-size: 0.85rem; font-weight: 600;
+    font-family: inherit; cursor: pointer; transition: var(--transition);
+    -webkit-appearance: none; appearance: none; flex-shrink: 0;
+}
+.brand-add-btn:active { transform: scale(0.95); box-shadow: 0 0 16px var(--accent-glow); }
+.brand-list {
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.brand-tag {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(217,70,239,0.08); border: 1px solid rgba(217,70,239,0.2);
+    border-radius: 20px; padding: 6px 12px;
+    font-size: 0.8rem; color: var(--accent-light);
+    transition: var(--transition);
+}
+.brand-tag__remove {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(244,114,182,0.15); border: none;
+    color: var(--danger); font-size: 0.7rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition);
+    -webkit-appearance: none; appearance: none;
+}
+.brand-tag__remove:active { background: rgba(244,114,182,0.3); }
+.brand-empty {
+    font-size: 0.8rem; color: var(--text-muted); padding: 8px 0;
+}
+
+/* ============================================
+   WISHLIST (愿望清单)
+   ============================================ */
+.wish-screen {
+    gap: 14px;
+}
+.wish-add-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+.wish-add-card__title {
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--accent-light); margin-bottom: 12px;
+}
+.wish-form {
+    display: flex; flex-direction: column; gap: 10px;
+}
+.wish-form-row {
+    display: flex; gap: 10px;
+}
+.wish-form-row .input-group { flex: 1; min-width: 0; }
+.wish-form-row .input-group input { width: 100%; }
+
+.wish-list-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+.wish-list__title {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--text-primary); margin-bottom: 10px;
+}
+.wish-list {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 400px; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.wish-list__empty {
+    text-align: center; padding: 20px 0;
+    font-size: 0.82rem; color: var(--text-muted);
+}
+.wish-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px; border-radius: var(--radius-sm);
+    background: rgba(217,70,239,0.04);
+    border: 1px solid rgba(217,70,239,0.08);
+    transition: var(--transition);
+}
+.wish-item.purchased {
+    opacity: 0.5;
+    border-color: rgba(167,139,250,0.2);
+}
+.wish-item__info { flex: 1; min-width: 0; }
+.wish-item__brand {
+    font-size: 0.85rem; font-weight: 600; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wish-item__model {
+    font-size: 0.72rem; color: var(--text-secondary); margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wish-item__price {
+    font-size: 0.9rem; font-weight: 700;
+    color: var(--accent-light); flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+.wish-item__toggle {
+    width: 44px; height: 24px; border-radius: 12px;
+    background: rgba(217,70,239,0.15); border: 1px solid rgba(217,70,239,0.2);
+    cursor: pointer; transition: var(--transition);
+    position: relative; flex-shrink: 0;
+    -webkit-appearance: none; appearance: none;
+}
+.wish-item__toggle::after {
+    content: ''; position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--text-muted);
+    transition: var(--transition);
+}
+.wish-item__toggle.active {
+    background: linear-gradient(135deg, var(--accent-dim), var(--accent));
+    border-color: var(--accent);
+}
+.wish-item__toggle.active::after {
+    left: 22px; background: white;
+}
+.wish-item__delete {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: none; border: none;
+    color: var(--text-muted); font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition);
+    flex-shrink: 0; opacity: 0.5;
+    -webkit-appearance: none; appearance: none;
+}
+.wish-item__delete:active { color: var(--danger); opacity: 1; }
+
+/* ============================================
+   CLOSET (收藏柜)
+   ============================================ */
+.closet-screen {
+    gap: 14px;
+}
+.closet-filter {
+    display: flex; gap: 8px; flex-wrap: wrap;
+}
+.closet-filter-btn {
+    font-size: 0.75rem; color: var(--text-muted);
+    background: none; border: 1px solid rgba(217,70,239,0.15);
+    border-radius: 20px; padding: 6px 14px;
+    cursor: pointer; transition: var(--transition);
+    font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+}
+.closet-filter-btn.active {
+    color: var(--accent); border-color: var(--accent);
+    background: rgba(217,70,239,0.1);
+}
+.closet-filter-btn:active { background: rgba(217,70,239,0.15); }
+
+.closet-add-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+.closet-add-card__title {
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--accent-light); margin-bottom: 12px;
+}
+.closet-form {
+    display: flex; flex-direction: column; gap: 10px;
+}
+.closet-form-row {
+    display: flex; gap: 10px;
+}
+.closet-form-row .input-group { flex: 1; min-width: 0; }
+.closet-form-row .input-group input,
+.closet-form-row .input-group select { width: 100%; }
+.closet-form-row .input-group select {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 13px 14px;
+    color: var(--text-primary); font-size: 1rem; font-family: inherit;
+    outline: none; transition: var(--transition);
+    -webkit-appearance: none; appearance: none;
+    cursor: pointer;
+}
+.closet-form-row .input-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+.closet-list-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+.closet-list__title {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--text-primary); margin-bottom: 10px;
+}
+.closet-list {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 400px; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.closet-list__empty {
+    text-align: center; padding: 20px 0;
+    font-size: 0.82rem; color: var(--text-muted);
+}
+.closet-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px; border-radius: var(--radius-sm);
+    background: rgba(217,70,239,0.04);
+    border: 1px solid rgba(217,70,239,0.08);
+    transition: var(--transition);
+}
+.closet-item__type-badge {
+    font-size: 0.65rem; font-weight: 600;
+    color: var(--accent); background: rgba(217,70,239,0.1);
+    border: 1px solid rgba(217,70,239,0.2);
+    border-radius: 12px; padding: 3px 8px;
+    flex-shrink: 0;
+}
+.closet-item__info { flex: 1; min-width: 0; }
+.closet-item__brand {
+    font-size: 0.85rem; font-weight: 600; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.closet-item__model {
+    font-size: 0.72rem; color: var(--text-secondary); margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.closet-item__note {
+    font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.closet-item__delete {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: none; border: none;
+    color: var(--text-muted); font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition);
+    flex-shrink: 0; opacity: 0.5;
+    -webkit-appearance: none; appearance: none;
+}
+.closet-item__delete:active { color: var(--danger); opacity: 1; }
 
 /* ============================================
    RESPONSIVE

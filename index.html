@@ -914,6 +914,143 @@
         </div>
 
         <!-- ============================================================ -->
+        <!--  TAB: SETTINGS (设置)                                        -->
+        <!-- ============================================================ -->
+        <div id="tab-settings" class="tab-content">
+
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Settings</h1>
+                <p class="header__subtitle">♠ 调教你的专属配置 ♠</p>
+            </header>
+
+            <section class="screen active settings-screen">
+                <!-- 品牌管理 -->
+                <div class="settings-section">
+                    <div class="settings-section__title">🏷️ 品牌管理</div>
+                    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:12px;">添加常用品牌，记录时可快速选择~</p>
+                    <div class="brand-add-row">
+                        <input type="text" id="brand-input" placeholder="输入品牌名..." maxlength="30">
+                        <button class="brand-add-btn" id="btn-add-brand">添加</button>
+                    </div>
+                    <div class="brand-list" id="brand-list">
+                        <div class="brand-empty">还没有添加品牌哦~快加几个常用的吧♠</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
+        <!--  TAB: WISHLIST (愿望清单)                                     -->
+        <!-- ============================================================ -->
+        <div id="tab-wishlist" class="tab-content">
+
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Wish List</h1>
+                <p class="header__subtitle">♠ 乖女孩的购物心愿 ♠</p>
+            </header>
+
+            <section class="screen active wish-screen">
+                <!-- 添加心愿 -->
+                <div class="wish-add-card">
+                    <div class="wish-add-card__title">💝 添加心愿</div>
+                    <div class="wish-form">
+                        <div class="wish-form-row">
+                            <div class="input-group">
+                                <label>品牌</label>
+                                <input type="text" id="wish-brand" placeholder="品牌名..." maxlength="30" list="wish-brand-list">
+                                <datalist id="wish-brand-list"></datalist>
+                            </div>
+                            <div class="input-group">
+                                <label>商品型号</label>
+                                <input type="text" id="wish-model" placeholder="型号/名称..." maxlength="50">
+                            </div>
+                        </div>
+                        <div class="wish-form-row">
+                            <div class="input-group">
+                                <label>价格</label>
+                                <input type="number" id="wish-price" placeholder="¥ 价格" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="btn-wish-add">加入愿望清单 ♠</button>
+                    </div>
+                </div>
+
+                <!-- 愿望列表 -->
+                <div class="wish-list-card">
+                    <div class="wish-list__title">🎀 我的愿望</div>
+                    <div class="wish-list" id="wish-list">
+                        <div class="wish-list__empty">还没有心愿呢~想要什么就大胆加进来吧，骚货♠</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
+        <!--  TAB: CLOSET (收藏柜)                                        -->
+        <!-- ============================================================ -->
+        <div id="tab-closet" class="tab-content">
+
+            <header class="header">
+                <div class="header__spade">♠ ♠ ♠</div>
+                <h1 class="header__title">Boudoir</h1>
+                <p class="header__subtitle">♠ 主人的私密收藏柜 ♠</p>
+            </header>
+
+            <section class="screen active closet-screen">
+                <!-- 分类筛选 -->
+                <div class="closet-filter" id="closet-filter">
+                    <button class="closet-filter-btn active" data-filter="all">全部</button>
+                    <button class="closet-filter-btn" data-filter="服饰">服饰</button>
+                    <button class="closet-filter-btn" data-filter="内饰">内饰</button>
+                </div>
+
+                <!-- 添加商品 -->
+                <div class="closet-add-card">
+                    <div class="closet-add-card__title">👗 添加收藏</div>
+                    <div class="closet-form">
+                        <div class="closet-form-row">
+                            <div class="input-group">
+                                <label>类型</label>
+                                <select id="closet-type">
+                                    <option value="服饰">服饰</option>
+                                    <option value="内饰">内饰</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>品牌</label>
+                                <input type="text" id="closet-brand" placeholder="品牌名..." maxlength="30" list="closet-brand-list">
+                                <datalist id="closet-brand-list"></datalist>
+                            </div>
+                        </div>
+                        <div class="closet-form-row">
+                            <div class="input-group">
+                                <label>商品型号</label>
+                                <input type="text" id="closet-model" placeholder="型号/名称..." maxlength="50">
+                            </div>
+                        </div>
+                        <div class="closet-form-row">
+                            <div class="input-group">
+                                <label>备注（可选）</label>
+                                <input type="text" id="closet-note" placeholder="颜色、尺码等..." maxlength="60">
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="btn-closet-add">收入柜中 ♠</button>
+                    </div>
+                </div>
+
+                <!-- 收藏列表 -->
+                <div class="closet-list-card">
+                    <div class="closet-list__title">💎 我的收藏</div>
+                    <div class="closet-list" id="closet-list">
+                        <div class="closet-list__empty">收藏柜还是空的~快把宝贝们收进来吧♠</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
         <!--  BOTTOM TAB BAR                                              -->
         <!-- ============================================================ -->
         <nav class="tab-bar">
@@ -951,6 +1088,18 @@
                     <button class="more-menu__item" data-tab="tab-stockings">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8 2 6 5 6 9c0 3 0 5-2 8h16c-2-3-2-5-2-8 0-4-2-7-6-7z"/><path d="M9 17v2a3 3 0 006 0v-2"/></svg>
                         <span>Silk</span>
+                    </button>
+                    <button class="more-menu__item" data-tab="tab-wishlist">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                        <span>Wish</span>
+                    </button>
+                    <button class="more-menu__item" data-tab="tab-closet">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                        <span>Boudoir</span>
+                    </button>
+                    <button class="more-menu__item" data-tab="tab-settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        <span>Settings</span>
                     </button>
                 </div>
             </div>

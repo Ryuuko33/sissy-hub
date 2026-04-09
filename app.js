@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v1.6.0';
+const APP_VERSION = 'v1.7.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -1932,10 +1932,10 @@ function stkUpdateUI() {
         if (cardEl) cardEl.classList.remove('recorded');
     }
 
-    // 更新品牌/型号建议列表
+    // 更新品牌建议列表（使用统一品牌管理）
     const brandList = $('#stk-brand-list');
     if (brandList) {
-        brandList.innerHTML = stkGetBrandSuggestions()
+        brandList.innerHTML = brandGetAll()
             .map((b) => `<option value="${b}">`).join('');
     }
     const modelList = $('#stk-model-list');
@@ -2012,6 +2012,359 @@ function initStockingsDiary() {
 }
 
 /* ============================================
+ * MODULE 7: BRAND MANAGER (品牌管理)
+ * ============================================ */
+const BRAND_STORAGE_KEY = 'sissy_brand_list';
+
+const brandState = {
+    brands: []  // ['Wolford', 'Atsugi', ...]
+};
+
+function brandLoad() {
+    try {
+        const raw = localStorage.getItem(BRAND_STORAGE_KEY);
+        if (raw) {
+            brandState.brands = JSON.parse(raw) || [];
+        }
+    } catch (e) { brandState.brands = []; }
+}
+
+function brandSave() {
+    try {
+        localStorage.setItem(BRAND_STORAGE_KEY, JSON.stringify(brandState.brands));
+    } catch (e) {}
+}
+
+function brandAdd() {
+    const input = $('#brand-input');
+    const name = (input?.value || '').trim();
+    if (!name) {
+        alert('品牌名不能为空哦~♠');
+        return;
+    }
+    if (brandState.brands.includes(name)) {
+        alert('这个品牌已经添加过了~♠');
+        return;
+    }
+    brandState.brands.push(name);
+    brandSave();
+    if (input) input.value = '';
+    brandRenderList();
+    // 更新所有使用品牌列表的 datalist
+    brandUpdateAllDataLists();
+}
+
+function brandRemove(name) {
+    brandState.brands = brandState.brands.filter((b) => b !== name);
+    brandSave();
+    brandRenderList();
+    brandUpdateAllDataLists();
+}
+
+function brandRenderList() {
+    const container = $('#brand-list');
+    if (!container) return;
+
+    if (brandState.brands.length === 0) {
+        container.innerHTML = '<div class="brand-empty">还没有添加品牌哦~快加几个常用的吧♠</div>';
+        return;
+    }
+
+    container.innerHTML = brandState.brands.map((b) => {
+        return `<div class="brand-tag">
+            <span>${b}</span>
+            <button class="brand-tag__remove" onclick="brandRemove('${b.replace(/'/g, "\\'")}')">✕</button>
+        </div>`;
+    }).join('');
+}
+
+function brandGetAll() {
+    // 合并品牌管理中的品牌和历史记录中的品牌
+    const allBrands = new Set(brandState.brands);
+    stkState.records.forEach((r) => allBrands.add(r.brand));
+    return [...allBrands];
+}
+
+function brandUpdateAllDataLists() {
+    const brands = brandGetAll();
+    const options = brands.map((b) => `<option value="${b}">`).join('');
+
+    // 更新丝袜日记的品牌列表
+    const stkBrandList = $('#stk-brand-list');
+    if (stkBrandList) stkBrandList.innerHTML = options;
+
+    // 更新愿望清单的品牌列表
+    const wishBrandList = $('#wish-brand-list');
+    if (wishBrandList) wishBrandList.innerHTML = options;
+
+    // 更新收藏柜的品牌列表
+    const closetBrandList = $('#closet-brand-list');
+    if (closetBrandList) closetBrandList.innerHTML = options;
+}
+
+function initBrandManager() {
+    brandLoad();
+    brandRenderList();
+
+    // 绑定添加按钮
+    $('#btn-add-brand')?.addEventListener('click', brandAdd);
+
+    // 回车添加
+    $('#brand-input')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') brandAdd();
+    });
+}
+
+/* ============================================
+ * MODULE 8: WISHLIST (愿望清单)
+ * ============================================ */
+const WISH_STORAGE_KEY = 'sissy_wishlist';
+
+const wishState = {
+    items: []  // [{ id, brand, model, price, purchased }]
+};
+
+function wishLoad() {
+    try {
+        const raw = localStorage.getItem(WISH_STORAGE_KEY);
+        if (raw) {
+            const data = JSON.parse(raw);
+            wishState.items = data.items || [];
+        }
+    } catch (e) { wishState.items = []; }
+}
+
+function wishSave() {
+    try {
+        localStorage.setItem(WISH_STORAGE_KEY, JSON.stringify({ items: wishState.items }));
+    } catch (e) {}
+}
+
+function wishGenId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function wishAdd() {
+    const brand = ($('#wish-brand')?.value || '').trim();
+    const model = ($('#wish-model')?.value || '').trim();
+    const priceStr = ($('#wish-price')?.value || '').trim();
+
+    if (!brand) {
+        alert('品牌不能为空哦~♠');
+        return;
+    }
+    if (!model) {
+        alert('商品型号不能为空哦~♠');
+        return;
+    }
+
+    const price = priceStr ? parseFloat(priceStr) : 0;
+
+    wishState.items.push({
+        id: wishGenId(),
+        brand,
+        model,
+        price,
+        purchased: false
+    });
+    wishSave();
+
+    // 清空输入
+    if ($('#wish-brand')) $('#wish-brand').value = '';
+    if ($('#wish-model')) $('#wish-model').value = '';
+    if ($('#wish-price')) $('#wish-price').value = '';
+
+    if (navigator.vibrate) navigator.vibrate(50);
+    wishRenderList();
+}
+
+function wishTogglePurchased(id) {
+    const item = wishState.items.find((i) => i.id === id);
+    if (item) {
+        item.purchased = !item.purchased;
+        wishSave();
+        wishRenderList();
+    }
+}
+
+function wishDelete(id) {
+    wishState.items = wishState.items.filter((i) => i.id !== id);
+    wishSave();
+    wishRenderList();
+}
+
+function wishRenderList() {
+    const container = $('#wish-list');
+    if (!container) return;
+
+    if (wishState.items.length === 0) {
+        container.innerHTML = '<div class="wish-list__empty">还没有心愿呢~想要什么就大胆加进来吧，骚货♠</div>';
+        return;
+    }
+
+    // 未购买的排前面
+    const sorted = [...wishState.items].sort((a, b) => {
+        if (a.purchased !== b.purchased) return a.purchased ? 1 : -1;
+        return 0;
+    });
+
+    container.innerHTML = sorted.map((item) => {
+        const priceDisplay = item.price > 0 ? `¥${item.price.toFixed(2)}` : '';
+        return `
+        <div class="wish-item ${item.purchased ? 'purchased' : ''}">
+            <div class="wish-item__info">
+                <div class="wish-item__brand">${item.brand}</div>
+                <div class="wish-item__model">${item.model}</div>
+            </div>
+            ${priceDisplay ? `<div class="wish-item__price">${priceDisplay}</div>` : ''}
+            <button class="wish-item__toggle ${item.purchased ? 'active' : ''}" onclick="wishTogglePurchased('${item.id}')" title="${item.purchased ? '标记为未购买' : '标记为已购买'}"></button>
+            <button class="wish-item__delete" onclick="wishDelete('${item.id}')" title="删除">✕</button>
+        </div>`;
+    }).join('');
+}
+
+function initWishlist() {
+    wishLoad();
+
+    // 绑定添加按钮
+    $('#btn-wish-add')?.addEventListener('click', wishAdd);
+
+    // 初始渲染
+    wishRenderList();
+
+    // 更新品牌 datalist
+    brandUpdateAllDataLists();
+}
+
+/* ============================================
+ * MODULE 9: CLOSET / BOUDOIR (收藏柜)
+ * ============================================ */
+const CLOSET_STORAGE_KEY = 'sissy_closet';
+
+const closetState = {
+    items: [],  // [{ id, type, brand, model, note }]
+    filter: 'all'
+};
+
+function closetLoad() {
+    try {
+        const raw = localStorage.getItem(CLOSET_STORAGE_KEY);
+        if (raw) {
+            const data = JSON.parse(raw);
+            closetState.items = data.items || [];
+        }
+    } catch (e) { closetState.items = []; }
+}
+
+function closetSave() {
+    try {
+        localStorage.setItem(CLOSET_STORAGE_KEY, JSON.stringify({ items: closetState.items }));
+    } catch (e) {}
+}
+
+function closetGenId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function closetAdd() {
+    const type = ($('#closet-type')?.value || '服饰').trim();
+    const brand = ($('#closet-brand')?.value || '').trim();
+    const model = ($('#closet-model')?.value || '').trim();
+    const note = ($('#closet-note')?.value || '').trim();
+
+    if (!brand) {
+        alert('品牌不能为空哦~♠');
+        return;
+    }
+    if (!model) {
+        alert('商品型号不能为空哦~♠');
+        return;
+    }
+
+    closetState.items.push({
+        id: closetGenId(),
+        type,
+        brand,
+        model,
+        note
+    });
+    closetSave();
+
+    // 清空输入（保留类型选择）
+    if ($('#closet-brand')) $('#closet-brand').value = '';
+    if ($('#closet-model')) $('#closet-model').value = '';
+    if ($('#closet-note')) $('#closet-note').value = '';
+
+    if (navigator.vibrate) navigator.vibrate(50);
+    closetRenderList();
+}
+
+function closetDelete(id) {
+    closetState.items = closetState.items.filter((i) => i.id !== id);
+    closetSave();
+    closetRenderList();
+}
+
+function closetSetFilter(filter) {
+    closetState.filter = filter;
+    // 更新筛选按钮高亮
+    $$('#closet-filter .closet-filter-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    closetRenderList();
+}
+
+function closetRenderList() {
+    const container = $('#closet-list');
+    if (!container) return;
+
+    const filtered = closetState.filter === 'all'
+        ? closetState.items
+        : closetState.items.filter((i) => i.type === closetState.filter);
+
+    if (filtered.length === 0) {
+        const msg = closetState.filter === 'all'
+            ? '收藏柜还是空的~快把宝贝们收进来吧♠'
+            : `还没有${closetState.filter}类的收藏~♠`;
+        container.innerHTML = `<div class="closet-list__empty">${msg}</div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map((item) => {
+        return `
+        <div class="closet-item">
+            <div class="closet-item__type-badge">${item.type}</div>
+            <div class="closet-item__info">
+                <div class="closet-item__brand">${item.brand}</div>
+                <div class="closet-item__model">${item.model}</div>
+                ${item.note ? `<div class="closet-item__note">${item.note}</div>` : ''}
+            </div>
+            <button class="closet-item__delete" onclick="closetDelete('${item.id}')" title="删除">✕</button>
+        </div>`;
+    }).join('');
+}
+
+function initCloset() {
+    closetLoad();
+
+    // 绑定添加按钮
+    $('#btn-closet-add')?.addEventListener('click', closetAdd);
+
+    // 绑定筛选按钮
+    $$('#closet-filter .closet-filter-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            closetSetFilter(btn.dataset.filter);
+        });
+    });
+
+    // 初始渲染
+    closetRenderList();
+
+    // 更新品牌 datalist
+    brandUpdateAllDataLists();
+}
+
+/* ============================================
  * INIT
  * ============================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -2030,5 +2383,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initCountdownTimer();
     initMusicPlayer();
     initWearTracker();
+    initBrandManager();
     initStockingsDiary();
+    initWishlist();
+    initCloset();
+
+    // 初始化完成后统一更新品牌 datalist
+    brandUpdateAllDataLists();
 });
