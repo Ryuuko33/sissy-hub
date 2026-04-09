@@ -2052,27 +2052,15 @@ body::before {
     padding: 10px 0;
 }
 .ootd-body {
-    width: 160px;
+    width: 180px;
     height: auto;
-    filter: drop-shadow(0 0 12px var(--accent-glow));
+    filter: drop-shadow(0 0 15px var(--accent-glow));
+    object-fit: contain;
+    animation: silhouetteGlow 3s ease-in-out infinite alternate;
 }
-
-/* 连体衣区域动画 */
-.ootd-bodysuit {
-    animation: bodysuitGlow 3s ease-in-out infinite alternate;
-}
-@keyframes bodysuitGlow {
-    0% { fill: rgba(217,70,239,0.06); }
-    100% { fill: rgba(217,70,239,0.14); }
-}
-
-/* 丝袜区域微光 */
-.ootd-stockings {
-    animation: stockingsShimmer 4s ease-in-out infinite alternate;
-}
-@keyframes stockingsShimmer {
-    0% { opacity: 0.2; }
-    100% { opacity: 0.35; }
+@keyframes silhouetteGlow {
+    0% { filter: drop-shadow(0 0 10px var(--accent-glow)); }
+    100% { filter: drop-shadow(0 0 20px var(--accent-glow)) brightness(1.05); }
 }
 
 /* 拉出标签 */

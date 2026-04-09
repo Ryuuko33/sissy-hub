@@ -29,64 +29,7 @@
             <section class="screen active ootd-screen">
                 <!-- 身体剪影 -->
                 <div class="ootd-silhouette">
-                    <svg class="ootd-body" viewBox="0 0 200 480" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- 头部 -->
-                        <ellipse cx="100" cy="32" rx="18" ry="22" fill="rgba(217,70,239,0.15)" stroke="var(--accent)" stroke-width="1.5"/>
-                        <!-- 脖子 -->
-                        <rect x="94" y="54" width="12" height="14" rx="4" fill="rgba(217,70,239,0.1)" stroke="var(--accent)" stroke-width="1"/>
-                        <!-- 肩膀 -->
-                        <path d="M94 68 Q60 72 48 90" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                        <path d="M106 68 Q140 72 152 90" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                        <!-- 手臂 -->
-                        <path d="M48 90 Q42 130 46 170 Q48 185 52 195" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                        <path d="M152 90 Q158 130 154 170 Q152 185 148 195" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                        <!-- 手 -->
-                        <ellipse cx="52" cy="198" rx="5" ry="7" fill="rgba(217,70,239,0.1)" stroke="var(--accent)" stroke-width="1"/>
-                        <ellipse cx="148" cy="198" rx="5" ry="7" fill="rgba(217,70,239,0.1)" stroke="var(--accent)" stroke-width="1"/>
-
-                        <!-- === 高叉连体衣区域 === -->
-                        <path class="ootd-bodysuit" d="M70 80 Q64 90 60 110 Q58 140 60 170 Q65 185 80 190 Q90 195 100 196 Q110 195 120 190 Q135 185 140 170 Q142 140 140 110 Q136 90 130 80 Q120 72 100 70 Q80 72 70 80Z" 
-                              fill="rgba(217,70,239,0.08)" stroke="var(--accent)" stroke-width="1.8" stroke-dasharray="none"/>
-                        <!-- 连体衣高叉线条 -->
-                        <path d="M80 190 Q90 210 100 215 Q110 210 120 190" stroke="var(--accent)" stroke-width="1.2" fill="none" opacity="0.6"/>
-                        <!-- 连体衣领口 -->
-                        <path d="M78 78 Q100 85 122 78" stroke="var(--accent-light)" stroke-width="1" fill="none" opacity="0.5"/>
-
-                        <!-- === Cage 区域 === -->
-                        <g class="ootd-cage-area">
-                            <rect x="90" y="195" width="20" height="18" rx="6" fill="rgba(167,139,250,0.12)" stroke="var(--success)" stroke-width="1.5"/>
-                            <text x="100" y="208" text-anchor="middle" font-size="9" fill="var(--success)">🔒</text>
-                        </g>
-
-                        <!-- === 连裤袜区域 === -->
-                        <!-- 左腿 -->
-                        <path class="ootd-stockings" d="M80 215 Q76 260 74 300 Q72 340 70 370 Q68 400 66 420 Q64 440 62 455" 
-                              stroke="var(--accent-light)" stroke-width="8" fill="none" opacity="0.25" stroke-linecap="round"/>
-                        <path d="M80 215 Q76 260 74 300 Q72 340 70 370 Q68 400 66 420 Q64 440 62 455" 
-                              stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                        <!-- 右腿 -->
-                        <path class="ootd-stockings" d="M120 215 Q124 260 126 300 Q128 340 130 370 Q132 400 134 420 Q136 440 138 455" 
-                              stroke="var(--accent-light)" stroke-width="8" fill="none" opacity="0.25" stroke-linecap="round"/>
-                        <path d="M120 215 Q124 260 126 300 Q128 340 130 370 Q132 400 134 420 Q136 440 138 455" 
-                              stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                        <!-- 丝袜纹理线 -->
-                        <path d="M77 250 L73 250" stroke="var(--accent)" stroke-width="0.5" opacity="0.3"/>
-                        <path d="M76 290 L72 290" stroke="var(--accent)" stroke-width="0.5" opacity="0.3"/>
-                        <path d="M75 330 L71 330" stroke="var(--accent)" stroke-width="0.5" opacity="0.3"/>
-                        <path d="M123 250 L127 250" stroke="var(--accent)" stroke-width="0.5" opacity="0.3"/>
-                        <path d="M124 290 L128 290" stroke="var(--accent)" stroke-width="0.5" opacity="0.3"/>
-                        <path d="M125 330 L129 330" stroke="var(--accent)" stroke-width="0.5" opacity="0.3"/>
-
-                        <!-- === 高跟鞋 === -->
-                        <!-- 左脚 -->
-                        <path d="M62 455 Q56 458 52 460 Q48 462 50 465 Q54 468 66 466 Q68 464 66 460 L62 455" 
-                              fill="rgba(217,70,239,0.15)" stroke="var(--accent)" stroke-width="1.5"/>
-                        <line x1="58" y1="465" x2="56" y2="478" stroke="var(--accent)" stroke-width="2"/>
-                        <!-- 右脚 -->
-                        <path d="M138 455 Q144 458 148 460 Q152 462 150 465 Q146 468 134 466 Q132 464 134 460 L138 455" 
-                              fill="rgba(217,70,239,0.15)" stroke="var(--accent)" stroke-width="1.5"/>
-                        <line x1="142" y1="465" x2="144" y2="478" stroke="var(--accent)" stroke-width="2"/>
-                    </svg>
+                    <img class="ootd-body" src="img/ootd-silhouette.png" alt="OOTD Silhouette" />
 
                     <!-- 连体衣标签 -->
                     <div class="ootd-label ootd-label--bodysuit" id="ootd-label-bodysuit">
