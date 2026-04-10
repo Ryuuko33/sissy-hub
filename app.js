@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.8.0';
+const APP_VERSION = 'v2.9.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -2126,6 +2126,7 @@ function wearRenderTodayLog() {
         const endTime = new Date(s.end);
         const timeStr = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')} - ${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
         const sizeTag = s.size ? `<span class="wear-history__item-size">${s.size}</span>` : '';
+        // size 已经包含 cm 后缀（来自 plugUpdateSizeSelect）
         return `
         <div class="wear-history__item">
             <div class="wear-history__item-icon">${s.icon}</div>
@@ -2216,17 +2217,19 @@ function plugUpdateSizeSelect() {
     if (!select) return;
 
     const plugItems = closetState.items.filter((i) => i.category === 'plug');
-    // 收集所有不同的尺寸
+    // 收集所有不同的尺寸(cm)，按数值排序
     const sizes = new Set();
     plugItems.forEach((item) => {
-        if (item.type) sizes.add(item.type);
+        const cm = item.sizeCm || (item.type ? parseFloat(item.type) : 0);
+        if (cm > 0) sizes.add(cm);
     });
 
     if (sizes.size === 0) {
         select.innerHTML = '<option value="">请先在 Boudoir 中添加 Plug</option>';
     } else {
+        const sorted = [...sizes].sort((a, b) => a - b);
         select.innerHTML = '<option value="">请选择尺寸...</option>' +
-            [...sizes].map((s) => `<option value="${s}">${s}</option>`).join('');
+            sorted.map((s) => `<option value="${s}cm">${s}cm</option>`).join('');
     }
 }
 
@@ -3057,9 +3060,36 @@ function closetGenId() {
 }
 
 function closetAdd(category) {
+    // Plug 类别仅需要尺寸(cm)参数
+    if (category === 'plug') {
+        const sizeInput = $('#closet-plug-size-cm');
+        const sizeVal = sizeInput ? parseFloat(sizeInput.value) : 0;
+        if (!sizeVal || sizeVal <= 0) {
+            alert('请输入 Plug 尺寸哦~主人要知道你用多大的♠');
+            return;
+        }
+        closetState.items.push({
+            id: closetGenId(),
+            category: 'plug',
+            brand: '',
+            model: '',
+            denier: 0,
+            type: sizeVal + 'cm',
+            sizeCm: sizeVal,
+            color: '',
+            note: ''
+        });
+        closetSave();
+        if (sizeInput) sizeInput.value = '';
+
+        if (navigator.vibrate) navigator.vibrate(50);
+        closetRenderList('plug');
+        if (typeof plugUpdateSizeSelect === 'function') plugUpdateSizeSelect();
+        return;
+    }
+
     let prefix;
     if (category === 'leotard') prefix = 'closet-leo';
-    else if (category === 'plug') prefix = 'closet-plug';
     else prefix = 'closet-ph';
     const brand = ($(`#${prefix}-brand`)?.value || '').trim();
     const model = ($(`#${prefix}-model`)?.value || '').trim();
@@ -3141,6 +3171,40 @@ function closetRenderList(category) {
         if (category === 'leotard') emptyMsg = '连体衣柜还是空的~快把宝贝们收进来吧♠';
         else if (category === 'plug') emptyMsg = 'Plug 柜还是空的~快把宝贝们收进来吧♠';
         container.innerHTML = `<div class="closet-list__empty">${emptyMsg}</div>`;
+        return;
+    }
+
+    // Plug 类别使用简化渲染（仅按尺寸分组）
+    if (category === 'plug') {
+        const sizeMap = {};
+        items.forEach((item) => {
+            const cm = item.sizeCm || (item.type ? parseFloat(item.type) : 0);
+            const key = cm > 0 ? cm : 'unknown';
+            if (!sizeMap[key]) sizeMap[key] = [];
+            sizeMap[key].push(item);
+        });
+        // 按尺寸数值排序
+        const sizeKeys = Object.keys(sizeMap).sort((a, b) => {
+            if (a === 'unknown') return 1;
+            if (b === 'unknown') return -1;
+            return parseFloat(a) - parseFloat(b);
+        });
+        container.innerHTML = sizeKeys.map((key) => {
+            const arr = sizeMap[key];
+            const label = key === 'unknown' ? '未知尺寸' : `${key}cm`;
+            const count = arr.length;
+            const deleteButtons = arr.map((item) =>
+                `<button class="closet-detail__item-delete" onclick="closetDelete('${item.id}')" title="删除" style="margin-left:4px;">✕</button>`
+            ).join('');
+            return `
+            <div class="closet-group" style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:1.1em;font-weight:600;color:var(--text-primary);">♠ ${label}</span>
+                    <span style="color:var(--text-secondary);font-size:0.9em;">×${count}</span>
+                </div>
+                <div style="display:flex;align-items:center;">${deleteButtons}</div>
+            </div>`;
+        }).join('');
         return;
     }
 
