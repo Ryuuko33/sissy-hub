@@ -3,26 +3,12 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.8.3';
+const APP_VERSION = 'v2.8.4';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
-/* --- iOS PWA 全屏高度修复 ---
- * iOS PWA standalone 模式下 100vh/100dvh 不包含 Home Indicator 区域，
- * 导致底部 tab-bar 无法真正贴底。通过 JS 动态获取 window.innerHeight
- * 并设置 CSS 变量 --app-height 来精确控制布局高度。
- */
-(function fixAppHeight() {
-    function setAppHeight() {
-        document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
-    }
-    setAppHeight();
-    window.addEventListener('resize', setAppHeight);
-    window.addEventListener('orientationchange', function () {
-        setTimeout(setAppHeight, 100);
-    });
-})();
+
 
 /* ============================================
  * 通用 IndexedDB 持久化存储层
