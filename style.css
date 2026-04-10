@@ -1937,8 +1937,21 @@ body::before {
 .closet-detail__note {
     font-size: 0.68rem; color: var(--text-muted); font-style: italic;
 }
+.closet-detail__item-actions {
+    display: flex; align-items: center; gap: 2px; flex-shrink: 0;
+}
+.closet-detail__item-edit {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: none; border: none;
+    color: var(--text-muted); font-size: 0.72rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition);
+    flex-shrink: 0; opacity: 0.4;
+    -webkit-appearance: none; appearance: none;
+}
+.closet-detail__item-edit:active { color: var(--accent); opacity: 1; }
 .closet-detail__item-delete {
-    width: 22px; height: 22px; border-radius: 50%;
+    width: 24px; height: 24px; border-radius: 50%;
     background: none; border: none;
     color: var(--text-muted); font-size: 0.75rem;
     display: flex; align-items: center; justify-content: center;
@@ -1947,6 +1960,23 @@ body::before {
     -webkit-appearance: none; appearance: none;
 }
 .closet-detail__item-delete:active { color: var(--danger); opacity: 1; }
+.closet-detail__add-color {
+    margin-top: 10px; padding-top: 8px;
+    border-top: 1px dashed rgba(217,70,239,0.15);
+}
+.closet-detail__add-color-btn {
+    width: 100%; padding: 8px 0;
+    background: none; border: 1px dashed rgba(217,70,239,0.25);
+    border-radius: var(--radius-sm);
+    color: var(--accent); font-size: 0.75rem;
+    font-family: inherit; cursor: pointer;
+    transition: var(--transition);
+    -webkit-appearance: none; appearance: none;
+}
+.closet-detail__add-color-btn:active {
+    background: rgba(217,70,239,0.1);
+    border-color: var(--accent);
+}
 
 /* ============================================
    DATA MANAGEMENT (导入/导出)

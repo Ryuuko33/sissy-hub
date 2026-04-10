@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.6.0';
+const APP_VERSION = 'v2.7.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -295,56 +295,61 @@ async function checkFirstLaunchImport() {
 }
 
 /* ============================================
- * 音效系统 — 使用真实音频文件（PointyAux NSFW SFX Pack）
+ * 音效系统 — 使用 Web Audio API 播放音效
+ * 解决：音乐播放时倒计时提示音不生效的问题
  * countdown-tick.wav : 湿润拍打声（倒数3秒提示）
  * phase-end.wav      : 强力喷射音效（阶段结束）
  * ============================================ */
 
-// 预加载音频文件，避免播放延迟
-const _sfx = {
-    tick: null,
-    end: null,
-    _loaded: false
-};
+// Web Audio API 上下文和缓冲区
+let _sfxCtx = null;
+const _sfxBuffers = { tick: null, end: null };
+let _sfxLoaded = false;
 
 /**
- * 预加载所有音效文件。
- * 在页面加载时调用，将音频文件缓存到内存中。
+ * 获取或创建 AudioContext（延迟创建，需要用户手势）
  */
-function preloadSFX() {
-    if (_sfx._loaded) return;
-    _sfx.tick = new Audio('sfx/countdown-tick.wav');
-    _sfx.end = new Audio('sfx/phase-end.wav');
-    // 预加载：让浏览器提前下载音频数据
-    _sfx.tick.preload = 'auto';
-    _sfx.end.preload = 'auto';
-    _sfx.tick.load();
-    _sfx.end.load();
-    _sfx._loaded = true;
+function getSFXContext() {
+    if (!_sfxCtx) {
+        _sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // 如果被暂停（iOS Safari），恢复它
+    if (_sfxCtx.state === 'suspended') {
+        _sfxCtx.resume().catch(() => {});
+    }
+    return _sfxCtx;
+}
+
+/**
+ * 预加载所有音效文件到 AudioBuffer。
+ * 使用 Web Audio API 解码音频数据，与 HTMLAudioElement 完全独立。
+ */
+async function preloadSFX() {
+    if (_sfxLoaded) return;
+    _sfxLoaded = true;
+    const ctx = getSFXContext();
+    const files = { tick: 'sfx/countdown-tick.wav', end: 'sfx/phase-end.wav' };
+    for (const [name, url] of Object.entries(files)) {
+        try {
+            const resp = await fetch(url);
+            const arrayBuf = await resp.arrayBuffer();
+            _sfxBuffers[name] = await ctx.decodeAudioData(arrayBuf);
+        } catch (e) {
+            console.warn(`[SissyHub SFX] 预加载 ${name} 失败:`, e);
+        }
+    }
 }
 
 /**
  * 在用户手势中解锁音频播放（iOS Safari 等需要）。
- * 通过播放一个静音操作来解锁 HTMLAudioElement。
+ * 通过创建 AudioContext 并恢复来解锁。
  */
 let _audioUnlocked = false;
 function unlockAudio() {
     if (_audioUnlocked) return;
+    _audioUnlocked = true;
+    getSFXContext();
     preloadSFX();
-    // 尝试播放并立即暂停来解锁音频上下文
-    const unlock = () => {
-        if (_sfx.tick) {
-            _sfx.tick.volume = 0;
-            const p = _sfx.tick.play();
-            if (p) p.then(() => {
-                _sfx.tick.pause();
-                _sfx.tick.currentTime = 0;
-                _sfx.tick.volume = 1;
-            }).catch(() => {});
-        }
-        _audioUnlocked = true;
-    };
-    unlock();
 }
 
 // 全局兜底：首次触摸/点击时解锁音频
@@ -352,22 +357,27 @@ document.addEventListener('touchstart', unlockAudio, { once: true });
 document.addEventListener('click', unlockAudio, { once: true });
 
 /**
- * 播放指定音效（克隆方式，支持重叠播放）
+ * 播放指定音效（Web Audio API，与音乐播放器完全独立，不会互相干扰）
  * @param {'tick'|'end'} name 音效名称
  */
 function playSFX(name) {
     try {
-        preloadSFX();
-        const src = _sfx[name];
-        if (!src) return;
-        // 克隆一个新的 Audio 实例，允许同一音效重叠播放
-        const clone = src.cloneNode();
-        clone.volume = 1;
-        clone.play().catch((e) => {
-            console.warn('[SissyHub Audio] play failed:', e);
-        });
+        const ctx = getSFXContext();
+        const buffer = _sfxBuffers[name];
+        if (!buffer) {
+            // 缓冲区还没加载好，尝试预加载
+            preloadSFX();
+            return;
+        }
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = 1;
+        source.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        source.start(0);
     } catch (e) {
-        console.warn('[SissyHub Audio] sfx error:', e);
+        console.warn('[SissyHub SFX] 播放失败:', e);
     }
 }
 
@@ -3121,7 +3131,10 @@ function closetRenderList(category) {
                 const noteStr = item.note ? `<span class="closet-detail__note">${item.note}</span>` : '';
                 return `<div class="closet-detail__item">
                     <span class="closet-detail__item-label">${noteStr}</span>
-                    <button class="closet-detail__item-delete" onclick="closetDelete('${item.id}')" title="删除">✕</button>
+                    <div class="closet-detail__item-actions">
+                        <button class="closet-detail__item-edit" onclick="closetEditColor('${item.id}')" title="修改颜色">✎</button>
+                        <button class="closet-detail__item-delete" onclick="closetDelete('${item.id}')" title="删除">✕</button>
+                    </div>
                 </div>`;
             }).join('');
             return `<div class="closet-detail__color-group">
@@ -3134,7 +3147,13 @@ function closetRenderList(category) {
             </div>`;
         }).join('');
 
-        const groupKey = `cg_${gi}`;
+        // 新增颜色按钮（使用第一个 item 的 brand+model 信息来定位分组）
+        const firstItemId = g.items[0].id;
+        const addColorBtn = `<div class="closet-detail__add-color">
+            <button class="closet-detail__add-color-btn" onclick="closetAddColorToGroup('${firstItemId}', '${category}')" title="新增颜色">+ 新增颜色</button>
+        </div>`;
+
+        const groupKey = `${category}_cg_${gi}`;
 
         return `
         <div class="closet-group" data-group-key="${groupKey}">
@@ -3152,6 +3171,7 @@ function closetRenderList(category) {
             </div>
             <div class="closet-group__detail hidden" id="closet-detail-${groupKey}">
                 ${detailHtml}
+                ${addColorBtn}
             </div>
         </div>`;
     }).join('');
@@ -3170,6 +3190,60 @@ function closetGetCSSColor(colorName) {
         '未指定': 'rgba(217,70,239,0.3)'
     };
     return colorMap[colorName] || 'var(--accent)';
+}
+
+/**
+ * 修改指定收藏条目的颜色
+ */
+function closetEditColor(itemId) {
+    const item = closetState.items.find((i) => i.id === itemId);
+    if (!item) return;
+    const currentColor = item.color || '未指定';
+    const newColor = prompt(`修改颜色（当前：${currentColor}）`, currentColor === '未指定' ? '' : currentColor);
+    if (newColor === null) return; // 用户取消
+    const trimmed = newColor.trim();
+    if (!trimmed) {
+        alert('颜色不能为空哦~♠');
+        return;
+    }
+    item.color = trimmed;
+    closetSave();
+    closetRenderList(item.category);
+    // 同步更新日记的收藏柜下拉选单
+    if (typeof stkUpdateClosetSelect === 'function') stkUpdateClosetSelect();
+    if (typeof leoUpdateClosetSelect === 'function') leoUpdateClosetSelect();
+}
+
+/**
+ * 给指定分组新增一个颜色条目（复制 brand/model/denier/type，只需输入新颜色）
+ */
+function closetAddColorToGroup(refItemId, category) {
+    const refItem = closetState.items.find((i) => i.id === refItemId);
+    if (!refItem) return;
+    const newColor = prompt(`为 ${refItem.brand} ${refItem.model} 新增颜色：`, '');
+    if (newColor === null) return; // 用户取消
+    const trimmed = newColor.trim();
+    if (!trimmed) {
+        alert('颜色不能为空哦~♠');
+        return;
+    }
+    const note = prompt('备注（可选，如尺码等）：', '') || '';
+    closetState.items.push({
+        id: closetGenId(),
+        category: category || refItem.category,
+        brand: refItem.brand,
+        model: refItem.model,
+        denier: refItem.denier || 0,
+        type: refItem.type || '',
+        color: trimmed,
+        note: note.trim()
+    });
+    closetSave();
+    if (navigator.vibrate) navigator.vibrate(50);
+    closetRenderList(category || refItem.category);
+    // 同步更新日记的收藏柜下拉选单
+    if (typeof stkUpdateClosetSelect === 'function') stkUpdateClosetSelect();
+    if (typeof leoUpdateClosetSelect === 'function') leoUpdateClosetSelect();
 }
 
 /**
