@@ -26,20 +26,26 @@
 
 /* --- Reset & Base --- */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+html {
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+    /* iOS PWA: 确保 html 撑满整个屏幕（包括安全区域） */
+    height: 100%;
+    height: -webkit-fill-available;
+}
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', Roboto, sans-serif;
     background: var(--bg-dark);
     color: var(--text-primary);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    /* 使用 min-height 确保撑满，同时不限制最大高度 */
+    height: 100%;
+    height: -webkit-fill-available;
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+    margin: 0;
+    padding: 0;
 }
 
 /* 确保 PWA standalone 模式下底部安全区域有背景色覆盖 */
@@ -91,6 +97,7 @@ body::before {
     flex-direction: column;
     position: relative;
     overflow: hidden;
+    background: var(--bg-dark);
 }
 
 /* ============================================
@@ -101,7 +108,7 @@ body::before {
     flex: 1;
     flex-direction: column;
     padding: 0 20px;
-    padding-bottom: 60px;
+    padding-bottom: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 0;
@@ -112,41 +119,18 @@ body::before {
 
 /* --- Bottom Tab Bar (可左右滚动) --- */
 .tab-bar {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    flex-shrink: 0;
     width: 100%;
     max-width: 420px;
-    padding: 0 0 0;
+    /* padding-bottom 让 tab-bar 自身向下延伸到安全区域 */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: constant(safe-area-inset-bottom);
     background: #0d0510;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
     z-index: 50;
     overflow: hidden;
-}
-/* 向下延伸覆盖 iPhone Home Indicator 区域，防止 PWA standalone 模式出现空白 */
-.tab-bar::after {
-    content: '';
-    position: absolute;
-    bottom: -200px;
-    left: 0;
-    right: 0;
-    height: 200px;
-    background: #0d0510;
-}
-
-/* iOS PWA 底部安全区域覆盖层 —— 由 JS 动态控制高度 */
-#ios-bottom-cover {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #0d0510;
-    z-index: 9999;
-    pointer-events: none;
 }
 .tab-bar__scroll {
     display: flex;
