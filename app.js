@@ -3,12 +3,10 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.8.8';
+const APP_VERSION = 'v2.8.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
-
-
 
 /* ============================================
  * 通用 IndexedDB 持久化存储层
@@ -399,16 +397,52 @@ function playPhaseEnd() {
  * TAB NAVIGATION
  * ============================================ */
 /**
- * iOS PWA standalone 模式下确保背景色覆盖
+ * iOS PWA standalone 模式下修复底部空白区域
+ * iOS 的 Home Indicator 区域在 PWA 中可能显示为空白，
+ * 通过 JS 动态创建覆盖层确保底部被正确填充。
  */
 function fixIOSBottomGap() {
+    // 不限制 standalone 模式，所有 iOS 设备都应用
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isStandalone = window.navigator.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches;
+
     // 强制设置 html 和 body 背景色（所有模式）
     document.documentElement.style.background = '#0d0510';
     document.body.style.background = '#0d0510';
 
+    if (!isIOS && !isStandalone) return;
+
+    // 创建一个固定在底部的覆盖层，使用较大的固定高度确保覆盖
+    const bottomCover = document.createElement('div');
+    bottomCover.id = 'ios-bottom-cover';
+    bottomCover.style.cssText = `
+        position: fixed;
+        bottom: -50px;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: #0d0510;
+        z-index: 48;
+        pointer-events: none;
+    `;
+    document.body.appendChild(bottomCover);
+
+    // 监听 resize 和 orientationchange 事件，确保覆盖层始终存在
+    const ensureCover = () => {
+        if (!document.getElementById('ios-bottom-cover')) {
+            document.body.appendChild(bottomCover);
+        }
+    };
+    window.addEventListener('resize', ensureCover);
+    window.addEventListener('orientationchange', ensureCover);
+
     // 页面可见性变化时也检查（从后台恢复时）
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
+            ensureCover();
+            // 重新强制背景色
             document.documentElement.style.background = '#0d0510';
             document.body.style.background = '#0d0510';
         }
