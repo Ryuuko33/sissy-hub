@@ -100,7 +100,7 @@ body::before {
     flex: 1;
     flex-direction: column;
     padding: 0 20px;
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 16px));
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 0;
