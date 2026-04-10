@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.7.0';
+const APP_VERSION = 'v2.8.0';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -123,7 +123,9 @@ const DATA_EXPORT_KEYS = [
     'sissy_brand_list',
     'sissy_wishlist',
     'sissy_closet',
-    'sissy_music_meta'
+    'sissy_music_meta',
+    'sissy_random_draw',
+    'sissy_random_settings'
 ];
 
 /**
@@ -1968,6 +1970,9 @@ async function wearLoadData() {
             if (saved.isWearing && saved.startTime) {
                 wearState[type].isWearing = true;
                 wearState[type].startTime = saved.startTime;
+                if (type === 'plug' && saved.currentSize) {
+                    wearState[type].currentSize = saved.currentSize;
+                }
             }
         });
 
@@ -1983,6 +1988,7 @@ function wearSaveData() {
         data[type] = {
             isWearing: s.isWearing,
             startTime: s.startTime,
+            currentSize: s.currentSize || '',
             allTimeTotal: s.allTimeTotal,
             sessions: s.sessions,
             todayKey: todayKey,
@@ -2004,11 +2010,16 @@ function wearToggle(type) {
         state.sessions++;
 
         // 记录本次会话
-        state.todaySessions.push({
+        const session = {
             start: state.startTime,
             end: Date.now(),
             duration: elapsed
-        });
+        };
+        // Plug 会话记录尺寸
+        if (type === 'plug' && state.currentSize) {
+            session.size = state.currentSize;
+        }
+        state.todaySessions.push(session);
 
         state.isWearing = false;
         state.startTime = null;
@@ -2016,6 +2027,16 @@ function wearToggle(type) {
         if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
     } else {
         // 开始佩戴
+        // Plug 需要选择尺寸
+        if (type === 'plug') {
+            const sizeSelect = $('#plug-size-select');
+            const selectedSize = sizeSelect ? sizeSelect.value : '';
+            if (!selectedSize) {
+                alert('请先选择 Plug 尺寸哦~主人要知道你用的哪一个♠');
+                return;
+            }
+            state.currentSize = selectedSize;
+        }
         state.isWearing = true;
         state.startTime = Date.now();
         if (navigator.vibrate) navigator.vibrate(50);
@@ -2086,7 +2107,8 @@ function wearRenderTodayLog() {
                 name: type === 'cage' ? 'Cage' : 'Plug',
                 start: s.start,
                 end: s.end,
-                duration: s.duration
+                duration: s.duration,
+                size: s.size || ''
             });
         });
     });
@@ -2103,11 +2125,12 @@ function wearRenderTodayLog() {
         const startTime = new Date(s.start);
         const endTime = new Date(s.end);
         const timeStr = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')} - ${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
+        const sizeTag = s.size ? `<span class="wear-history__item-size">${s.size}</span>` : '';
         return `
         <div class="wear-history__item">
             <div class="wear-history__item-icon">${s.icon}</div>
             <div class="wear-history__item-info">
-                <div class="wear-history__item-type">${s.name}</div>
+                <div class="wear-history__item-type">${s.name} ${sizeTag}</div>
                 <div class="wear-history__item-time">${timeStr}</div>
             </div>
             <div class="wear-history__item-duration">${wearFormatDuration(s.duration)}</div>
@@ -2178,10 +2201,33 @@ function initWearTracker() {
 
     // 初始渲染
     wearUpdateUI();
+    plugUpdateSizeSelect();
 
     // 启动定时器
     wearStartTicker();
     });
+}
+
+/**
+ * 从 closet 中获取 plug 的可用尺寸，填充到 Wear Tracker 的尺寸下拉菜单
+ */
+function plugUpdateSizeSelect() {
+    const select = $('#plug-size-select');
+    if (!select) return;
+
+    const plugItems = closetState.items.filter((i) => i.category === 'plug');
+    // 收集所有不同的尺寸
+    const sizes = new Set();
+    plugItems.forEach((item) => {
+        if (item.type) sizes.add(item.type);
+    });
+
+    if (sizes.size === 0) {
+        select.innerHTML = '<option value="">请先在 Boudoir 中添加 Plug</option>';
+    } else {
+        select.innerHTML = '<option value="">请选择尺寸...</option>' +
+            [...sizes].map((s) => `<option value="${s}">${s}</option>`).join('');
+    }
 }
 
 /* ============================================
@@ -2236,10 +2282,6 @@ function stkRecord() {
 
     if (!closetId) {
         alert('请先从收藏柜选择一双丝袜哦~乖女孩要记清楚穿的什么♠');
-        return;
-    }
-    if (!selectedColor) {
-        alert('请选择颜色哦~主人要知道你穿的是哪一双♠');
         return;
     }
 
@@ -2494,7 +2536,7 @@ function stkOnClosetSelectChange() {
     });
 
     if (colors.size === 0) {
-        colorSelect.innerHTML = '<option value="">无颜色信息</option><option value="未指定">未指定</option>';
+        colorSelect.innerHTML = '<option value="">无颜色信息</option>';
     } else {
         colorSelect.innerHTML = '<option value="">请选择颜色...</option>' +
             [...colors].map((c) => `<option value="${c}">${c}</option>`).join('');
@@ -2699,7 +2741,7 @@ function leoOnClosetSelectChange() {
     sameGroup.forEach((i) => { if (i.color) colors.add(i.color); });
 
     if (colors.size === 0) {
-        colorSelect.innerHTML = '<option value="">无颜色信息</option><option value="未指定">未指定</option>';
+        colorSelect.innerHTML = '<option value="">无颜色信息</option>';
     } else {
         colorSelect.innerHTML = '<option value="">请选择颜色...</option>' +
             [...colors].map((c) => `<option value="${c}">${c}</option>`).join('');
@@ -3015,7 +3057,10 @@ function closetGenId() {
 }
 
 function closetAdd(category) {
-    const prefix = category === 'leotard' ? 'closet-leo' : 'closet-ph';
+    let prefix;
+    if (category === 'leotard') prefix = 'closet-leo';
+    else if (category === 'plug') prefix = 'closet-plug';
+    else prefix = 'closet-ph';
     const brand = ($(`#${prefix}-brand`)?.value || '').trim();
     const model = ($(`#${prefix}-model`)?.value || '').trim();
     const denierEl = $(`#${prefix}-denier`);
@@ -3060,6 +3105,8 @@ function closetAdd(category) {
     // 同步更新日记的收藏柜下拉选单
     if (typeof stkUpdateClosetSelect === 'function') stkUpdateClosetSelect();
     if (typeof leoUpdateClosetSelect === 'function') leoUpdateClosetSelect();
+    // 同步更新 Wear Tracker 的 Plug 尺寸选择
+    if (typeof plugUpdateSizeSelect === 'function') plugUpdateSizeSelect();
 }
 
 function closetDelete(id) {
@@ -3071,21 +3118,28 @@ function closetDelete(id) {
     // 同步更新日记的收藏柜下拉选单
     if (typeof stkUpdateClosetSelect === 'function') stkUpdateClosetSelect();
     if (typeof leoUpdateClosetSelect === 'function') leoUpdateClosetSelect();
+    // 同步更新 Wear Tracker 的 Plug 尺寸选择
+    if (typeof plugUpdateSizeSelect === 'function') plugUpdateSizeSelect();
 }
 
 function closetRenderList(category) {
     if (!category) category = closetState.activeTab;
-    const containerId = category === 'leotard' ? 'closet-leo-list' : 'closet-ph-list';
+    let containerId;
+    if (category === 'leotard') containerId = 'closet-leo-list';
+    else if (category === 'plug') containerId = 'closet-plug-list';
+    else containerId = 'closet-ph-list';
     const container = $(`#${containerId}`);
     if (!container) return;
 
     const items = closetState.items.filter((i) => i.category === category);
-    const unitLabel = category === 'leotard' ? '件' : '双';
+    let unitLabel = '双';
+    if (category === 'leotard') unitLabel = '件';
+    else if (category === 'plug') unitLabel = '个';
 
     if (items.length === 0) {
-        const emptyMsg = category === 'leotard'
-            ? '连体衣柜还是空的~快把宝贝们收进来吧♠'
-            : '丝袜柜还是空的~快把宝贝们收进来吧♠';
+        let emptyMsg = '丝袜柜还是空的~快把宝贝们收进来吧♠';
+        if (category === 'leotard') emptyMsg = '连体衣柜还是空的~快把宝贝们收进来吧♠';
+        else if (category === 'plug') emptyMsg = 'Plug 柜还是空的~快把宝贝们收进来吧♠';
         container.innerHTML = `<div class="closet-list__empty">${emptyMsg}</div>`;
         return;
     }
@@ -3112,13 +3166,16 @@ function closetRenderList(category) {
         // 统计颜色和数量
         const colorCountMap = {};
         g.items.forEach((item) => {
-            const c = item.color || '未指定';
+            const c = item.color || '';
             if (!colorCountMap[c]) colorCountMap[c] = [];
             colorCountMap[c].push(item);
         });
         const totalCount = g.items.length;
         const colorEntries = Object.entries(colorCountMap);
-        const colorSummary = colorEntries.map(([c, arr]) => `${c}×${arr.length}`).join('、');
+        const colorSummary = colorEntries.map(([c, arr]) => {
+            const label = c || '无色';
+            return `${label}×${arr.length}`;
+        }).join('、');
 
         const extraParts = [];
         if (g.denier) extraParts.push(`${g.denier}D`);
@@ -3128,19 +3185,28 @@ function closetRenderList(category) {
         // 详细面板中每个颜色的条目
         const detailHtml = colorEntries.map(([color, arr]) => {
             const itemRows = arr.map((item) => {
-                const noteStr = item.note ? `<span class="closet-detail__note">${item.note}</span>` : '';
+                // 只在有备注时才显示条目行，否则不渲染空行
+                if (!item.note) {
+                    return `<div class="closet-detail__item closet-detail__item--compact">
+                        <div class="closet-detail__item-actions">
+                            <button class="closet-detail__item-edit" onclick="closetEditColor('${item.id}')" title="修改颜色">✎</button>
+                            <button class="closet-detail__item-delete" onclick="closetDelete('${item.id}')" title="删除">✕</button>
+                        </div>
+                    </div>`;
+                }
                 return `<div class="closet-detail__item">
-                    <span class="closet-detail__item-label">${noteStr}</span>
+                    <span class="closet-detail__item-label"><span class="closet-detail__note">${item.note}</span></span>
                     <div class="closet-detail__item-actions">
                         <button class="closet-detail__item-edit" onclick="closetEditColor('${item.id}')" title="修改颜色">✎</button>
                         <button class="closet-detail__item-delete" onclick="closetDelete('${item.id}')" title="删除">✕</button>
                     </div>
                 </div>`;
             }).join('');
+            const colorLabel = color || '无颜色';
             return `<div class="closet-detail__color-group">
                 <div class="closet-detail__color-header">
                     <span class="closet-detail__color-dot" style="background:${closetGetCSSColor(color)};"></span>
-                    <span class="closet-detail__color-name">${color}</span>
+                    <span class="closet-detail__color-name">${colorLabel}</span>
                     <span class="closet-detail__color-count">×${arr.length}</span>
                 </div>
                 ${itemRows}
@@ -3187,7 +3253,9 @@ function closetGetCSSColor(colorName) {
         '红色': '#e74c3c', '粉色': '#f8a5c2', '紫色': '#9b59b6',
         '蓝色': '#3498db', '深蓝': '#2c3e50', '绿色': '#27ae60',
         '米色': '#f5e6cc', '裸色': '#e8c4a0', '透明': 'rgba(255,255,255,0.3)',
-        '未指定': 'rgba(217,70,239,0.3)'
+    '未指定': 'rgba(217,70,239,0.3)',
+    '无颜色': 'rgba(217,70,239,0.3)',
+    '': 'rgba(217,70,239,0.3)'
     };
     return colorMap[colorName] || 'var(--accent)';
 }
@@ -3198,15 +3266,10 @@ function closetGetCSSColor(colorName) {
 function closetEditColor(itemId) {
     const item = closetState.items.find((i) => i.id === itemId);
     if (!item) return;
-    const currentColor = item.color || '未指定';
-    const newColor = prompt(`修改颜色（当前：${currentColor}）`, currentColor === '未指定' ? '' : currentColor);
+    const currentColor = item.color || '';
+    const newColor = prompt(`修改颜色（当前：${currentColor || '无'}）`, currentColor);
     if (newColor === null) return; // 用户取消
-    const trimmed = newColor.trim();
-    if (!trimmed) {
-        alert('颜色不能为空哦~♠');
-        return;
-    }
-    item.color = trimmed;
+    item.color = newColor.trim();
     closetSave();
     closetRenderList(item.category);
     // 同步更新日记的收藏柜下拉选单
@@ -3260,9 +3323,10 @@ function closetToggleGroup(groupKey) {
 
 function initCloset() {
     return closetLoad().then(() => {
-    // 绑定添加按钮（双衣柜）
+    // 绑定添加按钮（三衣柜）
     $('#btn-closet-ph-add')?.addEventListener('click', () => closetAdd('pantyhose'));
     $('#btn-closet-leo-add')?.addEventListener('click', () => closetAdd('leotard'));
+    $('#btn-closet-plug-add')?.addEventListener('click', () => closetAdd('plug'));
 
     // 衣柜子页签切换
     document.querySelectorAll('.closet-tab').forEach((tab) => {
@@ -3279,12 +3343,192 @@ function initCloset() {
         });
     });
 
-    // 初始渲染两个衣柜
+    // 初始渲染三个衣柜
     closetRenderList('pantyhose');
     closetRenderList('leotard');
+    closetRenderList('plug');
 
     // 更新品牌 datalist
     brandUpdateAllDataLists();
+    });
+}
+
+/* ============================================
+ * MODULE 10.5: RANDOM DRAW (随机抽取)
+ * 随机抽取 Cage/Plug 佩戴时间和 Plug 尺寸
+ * ============================================ */
+const RANDOM_STORAGE_KEY = 'sissy_random_draw';
+const RANDOM_SETTINGS_KEY = 'sissy_random_settings';
+
+const randomState = {
+    history: [],  // { date, cageHours, plugHours, plugSize, timestamp }
+    settings: {
+        cageMin: 1,
+        cageMax: 8,
+        plugMin: 0.5,
+        plugMax: 4
+    }
+};
+
+async function randomLoadData() {
+    try {
+        let data = await appDBGet(RANDOM_STORAGE_KEY);
+        if (!data) {
+            const raw = localStorage.getItem(RANDOM_STORAGE_KEY);
+            if (raw) data = JSON.parse(raw);
+        }
+        if (data && data.history) {
+            randomState.history = data.history;
+        }
+
+        // 加载设置
+        let settings = await appDBGet(RANDOM_SETTINGS_KEY);
+        if (!settings) {
+            const raw = localStorage.getItem(RANDOM_SETTINGS_KEY);
+            if (raw) settings = JSON.parse(raw);
+        }
+        if (settings) {
+            Object.assign(randomState.settings, settings);
+        }
+    } catch (e) {}
+}
+
+function randomSaveData() {
+    const data = { history: randomState.history };
+    try { localStorage.setItem(RANDOM_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    appDBSet(RANDOM_STORAGE_KEY, data);
+}
+
+function randomSaveSettings() {
+    try { localStorage.setItem(RANDOM_SETTINGS_KEY, JSON.stringify(randomState.settings)); } catch (e) {}
+    appDBSet(RANDOM_SETTINGS_KEY, randomState.settings);
+}
+
+function randomFormatHours(hours) {
+    if (hours < 1) {
+        return `${Math.round(hours * 60)}分钟`;
+    }
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    if (m === 0) return `${h}小时`;
+    return `${h}小时${m}分钟`;
+}
+
+function randomDraw() {
+    const s = randomState.settings;
+
+    // 随机 Cage 时间
+    const cageHours = +(s.cageMin + Math.random() * (s.cageMax - s.cageMin)).toFixed(1);
+
+    // 随机 Plug 时间
+    const plugHours = +(s.plugMin + Math.random() * (s.plugMax - s.plugMin)).toFixed(1);
+
+    // 随机 Plug 尺寸（从 closet 中获取）
+    const plugItems = closetState.items.filter((i) => i.category === 'plug');
+    const sizes = [...new Set(plugItems.map((i) => i.type).filter(Boolean))];
+    const plugSize = sizes.length > 0 ? sizes[Math.floor(Math.random() * sizes.length)] : '未配置';
+
+    // 显示结果
+    const resultCard = $('#random-result-card');
+    if (resultCard) resultCard.classList.remove('hidden');
+
+    const cageTimeEl = $('#random-cage-time');
+    const plugTimeEl = $('#random-plug-time');
+    const plugSizeEl = $('#random-plug-size');
+    const hintEl = $('#random-result-hint');
+
+    if (cageTimeEl) cageTimeEl.textContent = randomFormatHours(cageHours);
+    if (plugTimeEl) plugTimeEl.textContent = randomFormatHours(plugHours);
+    if (plugSizeEl) plugSizeEl.textContent = plugSize;
+
+    // 生成调教风格的提示语
+    const hints = [
+        `乖女孩~今天要戴着 Cage ${randomFormatHours(cageHours)}，Plug ${randomFormatHours(plugHours)}哦♠`,
+        `主人决定了~${plugSize} 的 Plug 塞好，Cage 锁紧，不许偷偷摘掉♠`,
+        `今天的任务已经抽好了~乖乖执行，不许讨价还价♠`,
+        `骚货~${randomFormatHours(plugHours)}的 Plug 和 ${randomFormatHours(cageHours)}的 Cage，享受吧♠`,
+        `主人给你安排好了~快去 Wear Tracker 开始计时吧，乖女孩♠`
+    ];
+    if (hintEl) hintEl.textContent = hints[Math.floor(Math.random() * hints.length)];
+
+    // 保存到历史
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    randomState.history.unshift({
+        date: dateStr,
+        cageHours,
+        plugHours,
+        plugSize,
+        timestamp: Date.now()
+    });
+    // 只保留最近 30 条
+    if (randomState.history.length > 30) randomState.history.length = 30;
+    randomSaveData();
+
+    if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 50]);
+
+    randomRenderHistory();
+}
+
+function randomRenderHistory() {
+    const container = $('#random-history-list');
+    if (!container) return;
+
+    if (randomState.history.length === 0) {
+        container.innerHTML = '<div class="random-history__empty">还没有抽取记录~快让主人决定你的命运吧♠</div>';
+        return;
+    }
+
+    container.innerHTML = randomState.history.slice(0, 10).map((r) => {
+        const dateStr = r.date;
+        const time = new Date(r.timestamp);
+        const timeStr = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
+        return `
+        <div class="random-history__item">
+            <div class="random-history__item-date">${dateStr} ${timeStr}</div>
+            <div class="random-history__item-detail">
+                <span>🔒 ${randomFormatHours(r.cageHours)}</span>
+                <span>♠ ${randomFormatHours(r.plugHours)}</span>
+                <span>📏 ${r.plugSize}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function randomLoadSettingsUI() {
+    const s = randomState.settings;
+    const cageMinEl = $('#setting-cage-min');
+    const cageMaxEl = $('#setting-cage-max');
+    const plugMinEl = $('#setting-plug-min');
+    const plugMaxEl = $('#setting-plug-max');
+    if (cageMinEl) cageMinEl.value = s.cageMin;
+    if (cageMaxEl) cageMaxEl.value = s.cageMax;
+    if (plugMinEl) plugMinEl.value = s.plugMin;
+    if (plugMaxEl) plugMaxEl.value = s.plugMax;
+}
+
+function randomSaveSettingsFromUI() {
+    const cageMin = parseFloat($('#setting-cage-min')?.value) || 1;
+    const cageMax = parseFloat($('#setting-cage-max')?.value) || 8;
+    const plugMin = parseFloat($('#setting-plug-min')?.value) || 0.5;
+    const plugMax = parseFloat($('#setting-plug-max')?.value) || 4;
+
+    randomState.settings.cageMin = Math.max(0.5, Math.min(24, cageMin));
+    randomState.settings.cageMax = Math.max(randomState.settings.cageMin, Math.min(24, cageMax));
+    randomState.settings.plugMin = Math.max(0.5, Math.min(24, plugMin));
+    randomState.settings.plugMax = Math.max(randomState.settings.plugMin, Math.min(24, plugMax));
+
+    randomSaveSettings();
+    randomLoadSettingsUI();
+    alert('设置已保存~♠');
+}
+
+function initRandomDraw() {
+    return randomLoadData().then(() => {
+        $('#btn-random-draw')?.addEventListener('click', randomDraw);
+        $('#btn-save-random-settings')?.addEventListener('click', randomSaveSettingsFromUI);
+        randomLoadSettingsUI();
+        randomRenderHistory();
     });
 }
 
@@ -3403,7 +3647,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         initStockingsDiary(),
         initLeotardDiary(),
         initWishlist(),
-        initCloset()
+        initCloset(),
+        initRandomDraw()
     ]);
 
     // 初始化完成后统一更新品牌 datalist

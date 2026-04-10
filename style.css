@@ -1930,9 +1930,16 @@ body::before {
 .closet-detail__item {
     display: flex; align-items: center; justify-content: space-between;
     padding: 4px 0 4px 16px;
+    min-height: 28px;
+}
+.closet-detail__item--compact {
+    padding: 2px 0 2px 16px;
+    justify-content: flex-end;
+    min-height: 0;
 }
 .closet-detail__item-label {
     font-size: 0.7rem; color: var(--text-secondary);
+    flex: 1; min-width: 0;
 }
 .closet-detail__note {
     font-size: 0.68rem; color: var(--text-muted); font-style: italic;
@@ -2204,6 +2211,148 @@ body::before {
 }
 .ootd-info__item-status.active {
     color: var(--accent-light);
+}
+
+/* ============================================
+   WEAR TRACKER - PLUG SIZE SELECT
+   ============================================ */
+.wear-card__size-select {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; margin-top: -4px;
+    border-top: 1px solid rgba(217,70,239,0.08);
+}
+.wear-card__size-label {
+    font-size: 0.72rem; color: var(--text-secondary);
+    white-space: nowrap;
+}
+.wear-card__size-dropdown {
+    flex: 1; padding: 6px 10px;
+    background: var(--surface-2); border: 1px solid rgba(217,70,239,0.15);
+    border-radius: var(--radius-sm); color: var(--text-primary);
+    font-size: 0.75rem; font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+}
+.wear-history__item-size {
+    display: inline-block; padding: 1px 6px;
+    background: rgba(217,70,239,0.12); border-radius: 4px;
+    font-size: 0.62rem; color: var(--accent-light);
+    margin-left: 4px; vertical-align: middle;
+}
+
+/* ============================================
+   RANDOM DRAW PAGE
+   ============================================ */
+.random-screen { padding: 0 16px 20px; }
+
+.random-draw-card {
+    display: flex; justify-content: center;
+    padding: 24px 0;
+}
+.random-draw-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(217,70,239,0.15), rgba(168,85,247,0.15));
+    border: 2px solid rgba(217,70,239,0.3);
+    color: var(--accent-light); cursor: pointer;
+    transition: var(--transition);
+    -webkit-appearance: none; appearance: none;
+    font-family: inherit;
+}
+.random-draw-btn:active {
+    transform: scale(0.95);
+    background: linear-gradient(135deg, rgba(217,70,239,0.25), rgba(168,85,247,0.25));
+    border-color: var(--accent);
+}
+.random-draw-btn__icon { font-size: 2.5rem; margin-bottom: 8px; }
+.random-draw-btn__text { font-size: 0.85rem; font-weight: 600; }
+
+.random-result-card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 20px 16px; margin-bottom: 16px;
+    border: 1px solid rgba(217,70,239,0.1);
+}
+.random-result__title {
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--accent-light); text-align: center;
+    margin-bottom: 16px;
+}
+.random-result__item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(217,70,239,0.06);
+}
+.random-result__item:last-of-type { border-bottom: none; }
+.random-result__item-icon {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    background: rgba(217,70,239,0.1); border-radius: 50%;
+    flex-shrink: 0;
+}
+.random-result__item-info { flex: 1; }
+.random-result__item-label {
+    font-size: 0.7rem; color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+.random-result__item-value {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--accent-light);
+}
+.random-result__hint {
+    margin-top: 16px; padding: 12px;
+    background: rgba(217,70,239,0.06); border-radius: var(--radius-sm);
+    font-size: 0.75rem; color: var(--text-secondary);
+    text-align: center; line-height: 1.5;
+}
+
+.random-history-card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 16px;
+    border: 1px solid rgba(217,70,239,0.1);
+}
+.random-history__title {
+    font-size: 0.8rem; font-weight: 600;
+    color: var(--text-primary); margin-bottom: 12px;
+}
+.random-history__empty {
+    font-size: 0.72rem; color: var(--text-muted);
+    text-align: center; padding: 20px 0;
+}
+.random-history__item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(217,70,239,0.06);
+}
+.random-history__item:last-child { border-bottom: none; }
+.random-history__item-date {
+    font-size: 0.68rem; color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.random-history__item-detail {
+    display: flex; gap: 12px;
+    font-size: 0.75rem; color: var(--text-secondary);
+}
+
+/* ============================================
+   SETTINGS - RANGE ROW
+   ============================================ */
+.settings-range-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+}
+.settings-range-row label {
+    flex: 1; font-size: 0.75rem; color: var(--text-secondary);
+}
+.settings-range-row input[type="number"] {
+    width: 70px; padding: 6px 8px;
+    background: var(--surface-2); border: 1px solid rgba(217,70,239,0.15);
+    border-radius: var(--radius-sm); color: var(--text-primary);
+    font-size: 0.8rem; font-family: inherit; text-align: center;
+    -webkit-appearance: none; appearance: none;
+}
+.settings-range-row span {
+    font-size: 0.72rem; color: var(--text-muted);
+    white-space: nowrap;
 }
 
 /* ============================================
