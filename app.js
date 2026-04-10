@@ -3,7 +3,7 @@
  * PWA Core Logic — Fitness + Timer + Music
  * ============================================ */
 
-const APP_VERSION = 'v2.8.5';
+const APP_VERSION = 'v2.8.6';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -3626,6 +3626,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
+
+    // ===== iOS PWA 底部安全区域覆盖 =====
+    // 纯 CSS 方案在 iOS standalone 模式下全部失效，
+    // 改用 JS 检测 screen.height 与 window.innerHeight 的差值，
+    // 用一个 fixed div 物理覆盖底部空白区域。
+    (function fixIOSBottomGap() {
+        const cover = document.getElementById('ios-bottom-cover');
+        if (!cover) return;
+        const isStandalone = window.navigator.standalone === true ||
+            window.matchMedia('(display-mode: standalone)').matches;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (!isStandalone || !isIOS) return;
+        function applyFix() {
+            // screen.height 是物理屏幕高度（CSS 像素），
+            // window.innerHeight 是可用视口高度。
+            // 差值就是被安全区域吃掉的部分。
+            const gap = screen.height - window.innerHeight;
+            if (gap > 0 && gap < 100) {
+                cover.style.display = 'block';
+                cover.style.height = gap + 'px';
+            } else {
+                cover.style.display = 'none';
+            }
+        }
+        applyFix();
+        window.addEventListener('resize', applyFix);
+        window.addEventListener('orientationchange', () => setTimeout(applyFix, 300));
+    })();
 
     // 显示版本号
     const versionEl = $('#app-version');
